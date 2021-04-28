@@ -1,0 +1,4 @@
+name: RfnetAPI
+version: ${project.version}
+main: network.reflected.rfnetapi.RfnetAPI
+load: STARTUP
