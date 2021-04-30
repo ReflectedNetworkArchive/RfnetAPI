@@ -102,6 +102,12 @@ public class Database {
                     "maxplayers",
                     String.valueOf(Bukkit.getMaxPlayers()) // Sadly with this redis driver I must convert to string
             );
+
+            redisConnection.sync().hset(
+                    "server:" + serverConfig.getId(),
+                    "address",
+                    serverConfig.getAddress()
+            );
         } else {
             // Un-register this server. The metadata is left in for speed, since it'll probably
             // be reused when this server restarts.

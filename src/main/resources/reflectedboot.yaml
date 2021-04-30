@@ -14,6 +14,8 @@ archetype: REPLACE-THIS
 # use any name scheme, as long as it consists of
 server-id: REPLACE-THIS
 
+connection-string: "127.0.0.1:25565"
+
 # --------------------------
 # Archetype Settings
 # --------------------------

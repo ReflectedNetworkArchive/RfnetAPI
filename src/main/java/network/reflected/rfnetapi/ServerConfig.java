@@ -31,6 +31,11 @@ public class ServerConfig {
             e.printStackTrace();
         }
 
+        if (getArchetype().equals("REPLACE-THIS")) {
+            missingMsg = "You need to fill out bootconfig.yaml in your server's root directory.";
+            valid = false;
+        }
+
         finishedLoad = true;
     }
 
@@ -78,6 +83,10 @@ public class ServerConfig {
 
     public List<String> getMaps() {
         return bootConfig.getStringList("maps");
+    }
+
+    public String getAddress() {
+        return bootConfig.getString("connection-string");
     }
 
     // Stolen from bukkit forums if it breaks then idk
