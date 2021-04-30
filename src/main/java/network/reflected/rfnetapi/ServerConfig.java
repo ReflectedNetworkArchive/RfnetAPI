@@ -16,7 +16,6 @@ public class ServerConfig {
     private YamlConfiguration bootConfig;
 
     public ServerConfig() {
-        // TODO: https://bukkit.org/threads/bukkits-yaml-configuration-tutorial.42770/
         bootConfigFile = new File("./bootconfig.yml");
 
         if(!bootConfigFile.exists()){
