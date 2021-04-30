@@ -1,0 +1,68 @@
+# --------------------------
+# Server Settings
+# --------------------------
+
+# The "game type" of this server. For example, if a player
+# wants to connect to a lobby, they will connect to any
+# server with the archetype of "lobby". To set the order
+# in which servers of this type are connected to change the
+# value of player-connection-strategy.
+archetype: REPLACE-THIS
+
+# The ID of this specific server. Should be different for
+# every server, even ones of the same archetype. You can
+# use any name scheme, as long as it consists of
+server-id: REPLACE-THIS
+
+# --------------------------
+# Archetype Settings
+# --------------------------
+
+# WARNING: THESE SETTINGS MUST BE THE SAME FOR EACH
+# SERVER MATCHING THIS ARCHETYPE, OR THINGS WILL BREAK!
+
+# Whether to broadcast (player) chat across servers. This
+# allows for people in different servers of this archetype
+# to chat as if they were all in the same server.
+global-chat: false
+
+# The strategy that ServerDiscovery will use to assign
+# players to each server of the same archetype.
+#    minimize -  Will spread players to as many different
+#                servers as possible.
+#    maximize -  Will pack individual servers with as many
+#                players as possible.
+#    random   -  Will assign players randomly.
+player-connection-strategy: maximize
+
+# --------------------------
+# Server Settings
+# --------------------------
+
+# Whether to randomize the map that is selected
+# from the list below on each restart.
+randomize-maps: true
+
+# Lists maps to choose from if randomize-maps is
+# true.
+maps:
+  - REPLACE-THIS
+  - REPLACE-THIS
+
+# --------------------------
+# Server Settings
+# --------------------------
+
+# The URI to connect to a MongoDB database. Cassandra
+# support may also be provided in the future. This
+# database will be used to store permissions and
+# purchase data. For instructions on how to format:
+# https://docs.mongodb.com/manual/reference/connection-string/
+mongo-uri: "REPLACE-THIS"
+
+# The URI to connect to a Redis database. Will be
+# used for ServerDiscovery and information on
+# parties. For instructions on how to format:
+# https://github.com/lettuce-io/lettuce-core/wiki/Redis-URI-and-connection-details
+redis-lettuce-uri: "REPLACE-THIS"
+redis-port: 6379
