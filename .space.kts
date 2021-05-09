@@ -5,16 +5,11 @@ job("Build, run tests, publish") {
         }
     }
 
-    container(displayName = "Run publish script", image = "maven:3-openjdk-8-slim") {
+    container(displayName = "Run publish script", image = "spigot") {
         env["REPOSITORY_URL"] = "https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven"
 
         shellScript {
             content = """
-                echo Build Spigot dependency...
-                mkdir BuildTools && cd BuildTools
-                wget https://hub.spigotmc.org/jenkins/job/BuildTools/lastStableBuild/artifact/target/BuildTools.jar
-                java -jar BuildTools.jar --rev 1.8.8
-                cd ../
                 echo Build and run tests...
                 mvn clean install
                 echo Publish artifacts...
