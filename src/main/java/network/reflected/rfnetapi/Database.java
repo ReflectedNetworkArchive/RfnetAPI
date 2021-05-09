@@ -94,7 +94,7 @@ public class Database {
             redisConnection.sync().hset(
                     "server:" + serverConfig.getId(),
                     "players",
-                    "0"
+                    String.valueOf(Bukkit.getOnlinePlayers().size())
             );
 
             redisConnection.sync().hset(
