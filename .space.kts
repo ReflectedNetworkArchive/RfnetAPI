@@ -10,6 +10,11 @@ job("Build, run tests, publish") {
 
         shellScript {
             content = """
+                echo Build Spigot dependency...
+                mkdir BuildTools && cd BuildTools
+                wget https://hub.spigotmc.org/jenkins/job/BuildTools/lastStableBuild/artifact/target/BuildTools.jar
+                java -jar BuildTools.jar --rev 1.8.8
+                cd ../
                 echo Build and run tests...
                 mvn clean install
                 echo Publish artifacts...
