@@ -6,7 +6,7 @@
 
     <groupId>network.reflected</groupId>
     <artifactId>RfnetAPI</artifactId>
-    <version>01</version>
+    <version>02</version>
     <packaging>jar</packaging>
 
     <name>RfnetAPI</name>
@@ -61,18 +61,16 @@
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
-        <repository>
-            <id>space-maven</id>
-            <url>https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven</url>
-        </repository>
     </repositories>
 
     <distributionManagement>
         <repository>
             <id>space-maven</id>
-            <url>https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven</url>
+            <!--suppress UnresolvedMavenProperty -->
+            <url>${repositoryUrl}</url>
         </repository>
     </distributionManagement>
+
 
     <dependencies>
         <dependency>
