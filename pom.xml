@@ -61,7 +61,18 @@
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
+        <repository>
+            <id>space-maven</id>
+            <url>https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven</url>
+        </repository>
     </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>space-maven</id>
+            <url>https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven</url>
+        </repository>
+    </distributionManagement>
 
     <dependencies>
         <dependency>
