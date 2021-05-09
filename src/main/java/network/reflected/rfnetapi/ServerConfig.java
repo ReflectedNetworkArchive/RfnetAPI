@@ -61,6 +61,10 @@ public class ServerConfig {
         return bootConfig.getString("redis-lettuce-uri");
     }
 
+    public int getRedisPort() {
+        return bootConfig.getInt("redis-port");
+    }
+
     public String getMongoURI() {
         return bootConfig.getString("mongo-uri");
     }
@@ -71,10 +75,6 @@ public class ServerConfig {
 
     public boolean isGlobalChatEnabled() {
         return bootConfig.getBoolean("global-chat");
-    }
-
-    public int getRedisPort() {
-        return bootConfig.getInt("redis-port");
     }
 
     public boolean isRandomizedMapsEnabled() {

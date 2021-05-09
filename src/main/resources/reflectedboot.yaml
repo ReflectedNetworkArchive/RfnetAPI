@@ -52,7 +52,7 @@ maps:
   - REPLACE-THIS
 
 # --------------------------
-# Server Settings
+# Database Settings
 # --------------------------
 
 # The URI to connect to a MongoDB database. Cassandra

@@ -79,7 +79,7 @@ public class Database {
 
             redisConnection.sync().hset(
                     "archetype:" + serverConfig.getArchetype(),
-                    "strategy",
+                    "globalChat",
                     String.valueOf(serverConfig.isGlobalChatEnabled())
             );
 
