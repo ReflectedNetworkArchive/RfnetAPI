@@ -5,8 +5,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.logging.Level;
 
 public final class RfnetAPI extends JavaPlugin {
-    ServerConfig serverConfig = new ServerConfig();
-    Database database = new Database(serverConfig);
+    private final ServerConfig serverConfig = new ServerConfig();
+    private final Database database = new Database(serverConfig);
 
     @Override
     public void onEnable() {

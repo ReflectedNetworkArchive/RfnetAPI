@@ -67,4 +67,3 @@ mongo-uri: "REPLACE-THIS"
 # parties. For instructions on how to format:
 # https://github.com/lettuce-io/lettuce-core/wiki/Redis-URI-and-connection-details
 redis-lettuce-uri: "REPLACE-THIS"
-redis-port: 6379
