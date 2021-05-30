@@ -5,7 +5,7 @@ job("Build, run tests, publish") {
         }
     }
 
-    container(displayName = "Run publish script", image = "reflectednetwork.registry.jetbrains.space/p/internalapi/containers/spigot:0.0.4", ) {
+    container(displayName = "Run publish script", image = "reflectednetwork.registry.jetbrains.space/p/internalapi/containers/spigot:0.0.6", ) {
         env["REPOSITORY_URL"] = "https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven"
 
         shellScript {

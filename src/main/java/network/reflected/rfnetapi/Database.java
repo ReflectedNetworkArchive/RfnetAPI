@@ -10,8 +10,6 @@ import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import org.bukkit.Bukkit;
 
-import java.time.Duration;
-
 // Abstracts away database so I can swap it out easier, since I
 // would only have to change code in here. Also takes in a config
 // to save the hassle of passing in a bunch of values that are
@@ -41,17 +39,13 @@ public class Database {
             database = mongoClient.getDatabase("purchasedata");
 
             // Lettuce initialization
-            redisClient = RedisClient.create("");
+            redisClient = RedisClient.create();
             redisConnection = redisClient.connect(
-                    new RedisURI(
-                            serverConfig.getRedisURI(),
-                            serverConfig.getRedisPort(),
-                            Duration.ofSeconds(5)
-                    )
+                    RedisURI.create(serverConfig.getRedisURI())
             );
 
             // If the above has finished without error, we're connected!
-            connected = false;
+            connected = true;
         } catch (Exception e) {
             e.printStackTrace(); // Don't just swallow the error that would be bad ;)
         }
@@ -94,7 +88,7 @@ public class Database {
             redisConnection.sync().hset(
                     "server:" + serverConfig.getId(),
                     "players",
-                    "0"
+                    String.valueOf(Bukkit.getOnlinePlayers().size())
             );
 
             redisConnection.sync().hset(

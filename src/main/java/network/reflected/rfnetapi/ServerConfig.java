@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
+import static org.bukkit.Bukkit.getLogger;
+
 public class ServerConfig {
     private String missingMsg = "";
     private boolean valid = true;
@@ -24,8 +26,16 @@ public class ServerConfig {
             copy(getClass().getClassLoader().getResourceAsStream("bootconfig.yml"), bootConfigFile);
         }
 
+        if (getClass().getClassLoader().getResourceAsStream("bootconfig.yml") == null) {
+            getLogger().warning("Template bootconfig.yml in jar is missing. (Something is about to fail)");
+        }
+
+        if (bootConfigFile == null) {
+            getLogger().warning("Failed to create bootconfig.yml file. (Something is about to fail)");
+        }
+
         try {
-            bootConfig.load(bootConfigFile);
+            bootConfig = YamlConfiguration.loadConfiguration(bootConfigFile);
         } catch (Exception e) {
             missingMsg = "Error loading config file.";
             e.printStackTrace();
@@ -42,7 +52,7 @@ public class ServerConfig {
     public boolean isValid() {
         // Check and make sure that the server ID field contains only contains ABCabc123
         // (other values may break some redis stuff)
-        return !(valid && finishedLoad);
+        return valid && finishedLoad;
     }
 
     public String whatsMissing() {
@@ -59,10 +69,6 @@ public class ServerConfig {
 
     public String getRedisURI() {
         return bootConfig.getString("redis-lettuce-uri");
-    }
-
-    public int getRedisPort() {
-        return bootConfig.getInt("redis-port");
     }
 
     public String getMongoURI() {

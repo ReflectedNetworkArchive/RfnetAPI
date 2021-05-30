@@ -6,7 +6,7 @@
 
     <groupId>network.reflected</groupId>
     <artifactId>RfnetAPI</artifactId>
-    <version>02</version>
+    <version>03</version>
     <packaging>jar</packaging>
 
     <name>RfnetAPI</name>
@@ -54,8 +54,8 @@
 
     <repositories>
         <repository>
-            <id>spigotmc-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+            <id>papermc-repo</id>
+            <url>https://papermc.io/repo/repository/maven-public/</url>
         </repository>
         <repository>
             <id>sonatype</id>
@@ -74,9 +74,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot</artifactId>
-            <version>1.8.8-R0.1-SNAPSHOT</version>
+            <groupId>com.destroystokyo.paper</groupId>
+            <artifactId>paper</artifactId>
+            <version>1.16.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
