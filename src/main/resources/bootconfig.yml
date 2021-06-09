@@ -41,12 +41,8 @@ player-connection-strategy: maximize
 # Server Settings
 # --------------------------
 
-# Whether to randomize the map that is selected
-# from the list below on each restart.
-randomize-maps: true
-
-# Lists maps to choose from if randomize-maps is
-# true.
+# Lists of maps to choose from. If there are more
+# than one map, one will be selected at random.
 maps:
   - REPLACE-THIS
   - REPLACE-THIS
