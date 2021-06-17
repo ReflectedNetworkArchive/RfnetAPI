@@ -13,12 +13,8 @@ import org.bukkit.event.server.ServerCommandEvent;
 import java.util.*;
 
 public class CommandRegistry implements Listener { // TODO: Needs testing
-    private static final CommandRegistry registry = new CommandRegistry();
+    @Getter private static final CommandRegistry registry = new CommandRegistry();
     Map<String, Command> commands = new HashMap<>();
-
-    public static CommandRegistry getRegistry() {
-        return registry;
-    }
 
     public void registerCommand(CommandRunnable command, int numberOfArgs, String name) {
         if (!commands.containsKey(name)) {

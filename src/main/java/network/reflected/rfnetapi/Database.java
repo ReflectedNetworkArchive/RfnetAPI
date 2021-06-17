@@ -14,6 +14,7 @@ import org.bukkit.Bukkit;
 // would only have to change code in here. Also takes in a config
 // to save the hassle of passing in a bunch of values that are
 // just straight from the config anyways.
+// TODO: Maybe this should be the implementation of an interface?
 public class Database {
     private RedisClient redisClient;
     private StatefulRedisConnection<String, String> redisConnection;

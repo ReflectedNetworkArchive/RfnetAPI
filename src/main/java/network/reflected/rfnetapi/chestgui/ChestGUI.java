@@ -1,5 +1,5 @@
 package network.reflected.rfnetapi.chestgui;
 
-public class ChestGUI {
+public class ChestGUI { // TODO: Implement stuff
 
 }

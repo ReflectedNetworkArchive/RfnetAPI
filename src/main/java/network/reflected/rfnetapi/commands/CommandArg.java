@@ -3,7 +3,7 @@ package network.reflected.rfnetapi.commands;
 import lombok.*;
 
 @RequiredArgsConstructor
-abstract class CommandArg {
+public abstract class CommandArg {
     public static CommandArg[] parse(String[] args) {
         CommandArg[] commandArgs = new CommandArg[args.length];
         for (int i = 0; i < args.length; i++) {

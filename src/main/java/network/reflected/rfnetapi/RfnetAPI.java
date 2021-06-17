@@ -27,6 +27,7 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
     private final ServerConfig serverConfig = new ServerConfig();
     @Getter private final Database database = new Database(serverConfig);
     @Getter private final PurchaseAPI purchaseAPI = new PurchaseAPI();
+    SlimePlugin slime = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
     SlimeLoader slimeMongoLoader;
     SlimeWorld loadedMap;
 
@@ -49,9 +50,15 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
         // Args: Individual server ID, type of server, whether it's online & accepting players
         database.setAvailable(true);
 
+//        // Because of a weird bug, you can't load SWM in onEnable.
+//        getServer().getScheduler().runTaskAsynchronously(this, () -> {
+//            while (Bukkit.) {
+//
+//            }
+//        });
+
         // Load the worlds as defined in the config
         // Start by setting up the SWM plugin
-        SlimePlugin slime = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
         if (slime != null) {
             slimeMongoLoader = slime.getLoader("mongodb");
 
@@ -94,6 +101,9 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
         // Register command events
         getServer().getPluginManager().registerEvents(CommandRegistry.getRegistry(), this);
+
+        // Setup default commands, available on every server
+        DefaultCommands.initialize();
     }
 
     @Override
