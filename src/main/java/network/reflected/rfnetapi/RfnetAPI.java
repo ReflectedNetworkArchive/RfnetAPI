@@ -4,11 +4,19 @@ import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.grinderwolf.swm.api.SlimePlugin;
 import com.grinderwolf.swm.api.loaders.SlimeLoader;
+import com.grinderwolf.swm.api.world.SlimeWorld;
 import com.grinderwolf.swm.api.world.properties.SlimeProperties;
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap;
+import lombok.Getter;
+import network.reflected.rfnetapi.commands.CommandRegistry;
+import network.reflected.rfnetapi.purchases.PurchaseAPI;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
@@ -17,9 +25,10 @@ import java.util.logging.Level;
 
 public final class RfnetAPI extends JavaPlugin implements Listener {
     private final ServerConfig serverConfig = new ServerConfig();
-    private final Database database = new Database(serverConfig);
-    private SlimePlugin slime;
+    @Getter private final Database database = new Database(serverConfig);
+    @Getter private final PurchaseAPI purchaseAPI = new PurchaseAPI();
     SlimeLoader slimeMongoLoader;
+    SlimeWorld loadedMap;
 
     @Override
     public void onEnable() {
@@ -42,34 +51,39 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
         // Load the worlds as defined in the config
         // Start by setting up the SWM plugin
-        slime = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
-        slimeMongoLoader = slime.getLoader("mongodb");
+        SlimePlugin slime = (SlimePlugin) Bukkit.getPluginManager().getPlugin("SlimeWorldManager");
+        if (slime != null) {
+            slimeMongoLoader = slime.getLoader("mongodb");
 
-        // Now set some properties of the world
-        SlimePropertyMap mapProperties = new SlimePropertyMap();
-        mapProperties.setValue(SlimeProperties.DIFFICULTY, "normal");
-        mapProperties.setValue(SlimeProperties.SPAWN_X, 0);
-        mapProperties.setValue(SlimeProperties.SPAWN_Y, 64);
-        mapProperties.setValue(SlimeProperties.SPAWN_Z, 0);
-        mapProperties.setValue(SlimeProperties.WORLD_TYPE, "FLAT"); // removes void effect at lower y levels
+            // Now set some properties of the world
+            SlimePropertyMap mapProperties = new SlimePropertyMap();
+            mapProperties.setValue(SlimeProperties.DIFFICULTY, "normal");
+            mapProperties.setValue(SlimeProperties.SPAWN_X, 0);
+            mapProperties.setValue(SlimeProperties.SPAWN_Y, 64);
+            mapProperties.setValue(SlimeProperties.SPAWN_Z, 0);
+            mapProperties.setValue(SlimeProperties.WORLD_TYPE, "FLAT"); // removes void effect at lower y levels
 
-        // And finally, find out which world to load.
-        try {
-            if (serverConfig.getMaps().size() == 1) { // There is only one map to choose
-                // Also that magic boolean before mapProperties is whether it's read only. No slime worlds we load
-                // would be good to make editable (they are all minigame maps)
-                slime.loadWorld(slimeMongoLoader, serverConfig.getMaps().get(0), true, mapProperties);
-            } else { // A map must be chosen at random.
-                List<String> maps = serverConfig.getMaps();
-                Random rand = new Random();
-                // See above for what the magic boolean is
-                slime.loadWorld(slimeMongoLoader, maps.get(rand.nextInt(maps.size())), true, mapProperties);
+            // And finally, find out which world to load.
+            try {
+                if (serverConfig.getMaps().size() == 1) { // There is only one map to choose
+                    // Also that magic boolean before mapProperties is whether it's read only. No slime worlds we load
+                    // would be good to make editable (they are all minigame maps)
+                    loadedMap = slime.loadWorld(slimeMongoLoader, serverConfig.getMaps().get(0), true, mapProperties);
+                } else { // A map must be chosen at random.
+                    List<String> maps = serverConfig.getMaps();
+                    Random rand = new Random();
+                    // See above for what the magic boolean is
+                    loadedMap = slime.loadWorld(slimeMongoLoader, maps.get(rand.nextInt(maps.size())), true, mapProperties);
+                }
+
+                getLogger().info("Loading " + loadedMap.getName());
+                slime.generateWorld(loadedMap);
+            } catch (Exception e) {
+                // If the map fails to load, there's nothing to connect to, so stop the server.
+                e.printStackTrace();
+                getLogger().log(Level.SEVERE, "Error loading a map! The server has to shut down!");
+                getServer().shutdown();
             }
-        } catch (Exception e) {
-            // If the map fails to load, there's nothing to connect to, so stop the server.
-            e.printStackTrace();
-            getLogger().log(Level.SEVERE, "Error loading a map! The server has to shut down!");
-            getServer().shutdown();
         }
 
         // Setup a plugin messaging channel
@@ -77,6 +91,9 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
         // Register this class as an event listener
         getServer().getPluginManager().registerEvents(this, this);
+
+        // Register command events
+        getServer().getPluginManager().registerEvents(CommandRegistry.getRegistry(), this);
     }
 
     @Override
@@ -95,5 +112,12 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
         out.writeUTF("send:" + player.getUniqueId() + ":" + archetype);
 
         player.sendPluginMessage(this, "BungeeCord", out.toByteArray());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void playerJoin(PlayerJoinEvent event) {
+        Location location = event.getPlayer().getLocation();
+        location.setWorld(Bukkit.getWorld(loadedMap.getName()));
+        event.getPlayer().teleport(location);
     }
 }
