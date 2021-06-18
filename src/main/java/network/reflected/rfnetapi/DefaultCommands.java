@@ -4,7 +4,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
-import network.reflected.rfnetapi.commands.CommandRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -12,7 +11,7 @@ import java.util.Objects;
 
 public class DefaultCommands {
     public static void initialize() {
-        CommandRegistry.getRegistry().registerCommand((executor, arguments) -> {
+        ReflectedAPI.getCommandProvider().registerCommand((executor, arguments) -> {
             executor.sendMessage(
                     Component.text("\n").append(
                             Component.text("Click the link below to join our discord!\n")
@@ -31,13 +30,13 @@ public class DefaultCommands {
             );
         }, 0, "discord");
 
-        CommandRegistry.getRegistry().registerCommands((executor, arguments) -> {
+        ReflectedAPI.getCommandProvider().registerCommands((executor, arguments) -> {
             if (executor instanceof Player) {
                 ((RfnetAPI) Objects.requireNonNull(Bukkit.getPluginManager().getPlugin("RfnetAPI"))).sendPlayer((Player) executor, "lobby");
             }
         }, 0, "hub", "lobby");
 
-        CommandRegistry.getRegistry().registerCommand((executor, arguments) -> {
+        ReflectedAPI.getCommandProvider().registerCommand((executor, arguments) -> {
             executor.sendMessage(
                     Component.text("\n")
                             .append(Component.text("Command List").color(TextColor.color(200, 255, 230)))

@@ -2,12 +2,12 @@ package network.reflected.rfnetapi.purchases;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
-import network.reflected.rfnetapi.commands.CommandRegistry;
+import network.reflected.rfnetapi.ReflectedAPI;
 import org.bukkit.entity.Player;
 
 public class PurchaseAPI { // TODO: Write the methods in this class
     public PurchaseAPI() {
-        CommandRegistry.getRegistry().registerCommand((executor, arguments) -> {
+        ReflectedAPI.getCommandProvider().registerCommand((executor, arguments) -> {
             if (executor instanceof Player) {
                 executor.sendMessage(
                         Component.text("You currently have ")

@@ -3,8 +3,6 @@ package network.reflected.rfnetapi;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import lombok.Getter;
-import network.reflected.rfnetapi.commands.CommandRegistry;
-import network.reflected.rfnetapi.purchases.PurchaseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -20,8 +18,7 @@ import java.util.logging.Level;
 
 public final class RfnetAPI extends JavaPlugin implements Listener {
     private final ServerConfig serverConfig = new ServerConfig();
-    @Getter private final Database database = new Database(serverConfig);
-    @Getter private final PurchaseAPI purchaseAPI = new PurchaseAPI();
+    private final Database database = new Database(serverConfig);
     @Getter private String loadedMap;
 
     @Override
@@ -84,7 +81,7 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
 
         // Register command events
-        getServer().getPluginManager().registerEvents(CommandRegistry.getRegistry(), this);
+        getServer().getPluginManager().registerEvents(ReflectedAPI.getCommandProvider(), this);
 
         // Setup default commands, available on every server
         DefaultCommands.initialize();
@@ -100,6 +97,7 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
             }
             // Run the command to load the right map. Janky, but it works.
             Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "swm load " + loadedMap);
+            ReflectedAPI.setMapName(loadedMap);
 
             // Add this server's information to Redis for ServerDiscovery.
             // Args: Individual server ID, type of server, whether it's online & accepting players
@@ -126,7 +124,7 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void playerJoin(PlayerJoinEvent event) {
+    private void playerJoin(PlayerJoinEvent event) {
         Location location = event.getPlayer().getLocation();
         location.setWorld(Bukkit.getWorld(loadedMap));
         event.getPlayer().teleport(location);

@@ -1,10 +1,12 @@
-package network.reflected.rfnetapi.commands;
+package network.reflected.rfnetapi;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import network.reflected.rfnetapi.commands.CommandArg;
+import network.reflected.rfnetapi.commands.CommandRunnable;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
@@ -16,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class CommandRegistry implements Listener { // TODO: Needs testing
-    @Getter private static final CommandRegistry registry = new CommandRegistry();
     Map<String, Command> commands = new HashMap<>();
 
     public void registerCommand(CommandRunnable command, String permission, int numberOfArgs, String name) {
@@ -46,7 +47,7 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
         }
     }
 
-    public boolean executeCommand(CommandSender commandSender, String commandStr) {
+    private boolean executeCommand(CommandSender commandSender, String commandStr) {
         String[] tokenized = tokenize(commandStr);
         if (!commands.containsKey(tokenized[0])) {
             return false;
@@ -69,7 +70,7 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
         return true;
     }
 
-    public static String[] tokenize(String input) {
+    private static String[] tokenize(String input) {
         List<String> tokens = new ArrayList<>();
         boolean inquotes = false;
         StringBuilder currentToken = new StringBuilder();
@@ -106,7 +107,7 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
     }
 
     @EventHandler
-    public void playerCommand(AsyncChatEvent event) {
+    private void playerCommand(AsyncChatEvent event) {
         if (((TextComponent)event.message()).content().startsWith("?")) {
             if (!executeCommand(event.getPlayer(), ((TextComponent)event.message()).content().substring(1))) {
                 event.getPlayer().sendMessage(Component.text("Command not found."));
@@ -116,14 +117,14 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
     }
 
     @EventHandler
-    public void playerCommand(PlayerCommandPreprocessEvent event) {
+    private void playerCommand(PlayerCommandPreprocessEvent event) {
         if (event.getMessage().startsWith("/")) {
             event.setCancelled(executeCommand(event.getPlayer(), event.getMessage().substring(1)));
         }
     }
 
     @EventHandler
-    public void serverCommand(ServerCommandEvent event) {
+    private void serverCommand(ServerCommandEvent event) {
         if (event.getCommand().startsWith("/")) {
             event.setCancelled(executeCommand(event.getSender(), event.getCommand().substring(1)));
         } else {
@@ -132,13 +133,13 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
     }
 
     @RequiredArgsConstructor
-    public static class Command {
+    private static class Command {
         @Getter final CommandRunnable runnable;
         @Getter final String permission;
         @Getter final int argCount;
     }
 
-    public static class EmptyCommand extends org.bukkit.command.Command {
+    private static class EmptyCommand extends org.bukkit.command.Command {
         protected EmptyCommand(@NotNull String name) {
             super(name);
         }
