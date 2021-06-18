@@ -5,10 +5,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -16,12 +19,25 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
     @Getter private static final CommandRegistry registry = new CommandRegistry();
     Map<String, Command> commands = new HashMap<>();
 
-    public void registerCommand(CommandRunnable command, int numberOfArgs, String name) {
+    public void registerCommand(CommandRunnable command, String permission, int numberOfArgs, String name) {
         if (!commands.containsKey(name)) {
-            commands.put(name, new Command(command, numberOfArgs));
+            if (!Bukkit.getCommandMap().getKnownCommands().containsKey(name)) {
+                Bukkit.getCommandMap().register("reflected", new EmptyCommand(name));
+            }
+            commands.put(name, new Command(command, permission, numberOfArgs));
         } else {
             throw new ArrayStoreException("That command has already been registered!");
         }
+    }
+
+    public void registerCommands(CommandRunnable command, String permission, int numberOfArgs, String... names ) {
+        for (String name : names) {
+            registerCommand(command, permission, numberOfArgs, name);
+        }
+    }
+
+    public void registerCommand(CommandRunnable command, int numberOfArgs, String name) {
+        registerCommand(command, "", numberOfArgs, name);
     }
 
     public void registerCommands(CommandRunnable command, int numberOfArgs, String... names ) {
@@ -32,8 +48,14 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
 
     public boolean executeCommand(CommandSender commandSender, String commandStr) {
         String[] tokenized = tokenize(commandStr);
-        if (commands.containsKey(tokenized[0])) return false;
+        if (!commands.containsKey(tokenized[0])) {
+            return false;
+        }
         Command command = commands.get(commandStr);
+
+        if (!command.permission.equals("") && !commandSender.hasPermission(command.permission)) {
+            return false; // If they don't have permission, pretend the command doesn't exist.
+        }
 
         if (tokenized.length - 1 != command.argCount) {
             commandSender.sendMessage(Component.text("This command expects " + command.argCount + " arguments."));
@@ -42,7 +64,7 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
 
         command.getRunnable().run(
                 commandSender,
-                CommandArg.parse(Arrays.copyOfRange(tokenized, 1, tokenized.length - 1))
+                command.argCount == 0 ? null : CommandArg.parse(Arrays.copyOfRange(tokenized, 1, tokenized.length - 1))
         );
         return true;
     }
@@ -85,8 +107,18 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
 
     @EventHandler
     public void playerCommand(AsyncChatEvent event) {
-        if (((TextComponent)event.message()).content().startsWith("/")) {
-            event.setCancelled(executeCommand(event.getPlayer(), ((TextComponent)event.message()).content().substring(1)));
+        if (((TextComponent)event.message()).content().startsWith("?")) {
+            if (!executeCommand(event.getPlayer(), ((TextComponent)event.message()).content().substring(1))) {
+                event.getPlayer().sendMessage(Component.text("Command not found."));
+            }
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void playerCommand(PlayerCommandPreprocessEvent event) {
+        if (event.getMessage().startsWith("/")) {
+            event.setCancelled(executeCommand(event.getPlayer(), event.getMessage().substring(1)));
         }
     }
 
@@ -102,6 +134,18 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
     @RequiredArgsConstructor
     public static class Command {
         @Getter final CommandRunnable runnable;
+        @Getter final String permission;
         @Getter final int argCount;
+    }
+
+    public static class EmptyCommand extends org.bukkit.command.Command {
+        protected EmptyCommand(@NotNull String name) {
+            super(name);
+        }
+
+        @Override
+        public boolean execute(@NotNull CommandSender sender, @NotNull String commandLabel, @NotNull String[] args) {
+            return true; // Ignore that this command exists
+        }
     }
 }
