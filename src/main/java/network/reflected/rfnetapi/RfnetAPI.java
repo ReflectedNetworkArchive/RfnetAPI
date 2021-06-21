@@ -127,7 +127,7 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
     // Sends a plugin message to ServerDiscovery running on bungee.
     public void sendPlayer(Player player, String archetype) {
-        if (!api.getPurchaseAPI().isAuthenticating(player) && !archetype.equals("lobby")) {  // If the player is busy making a purchase or changing a password, don't interrupt it.
+        if (!api.getPurchaseAPI().isAuthenticating(player) || archetype.equals("lobby")) {  // If the player is busy making a purchase or changing a password, don't interrupt it.
             ByteArrayDataOutput out = ByteStreams.newDataOutput();
 
             // See the spec for this in ServerDiscovery

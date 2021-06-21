@@ -5,11 +5,9 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import network.reflected.rfnetapi.commands.StringArg;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.List;
-import java.util.Objects;
 
 public class DefaultCommands {
     static List<String> availableGames = List.of(
@@ -42,7 +40,7 @@ public class DefaultCommands {
 
         ReflectedAPI.get((api -> api.getCommandProvider().registerCommands((executor, arguments) -> {
             if (executor instanceof Player) {
-                ((RfnetAPI) Objects.requireNonNull(Bukkit.getPluginManager().getPlugin("RfnetAPI"))).sendPlayer((Player) executor, "lobby");
+               api.sendPlayer((Player) executor, "lobby");
             }
         }, 0, "hub", "lobby")));
 
