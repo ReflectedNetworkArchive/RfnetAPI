@@ -18,15 +18,11 @@ public class StringArg extends CommandArg {
             return false;
         } else if (IntArg.is(argument)) {
             return false;
-        } else if (DoubleArg.is(argument)) {
-            return false;
-        } else {
-            return true;
-        }
+        } else return !DoubleArg.is(argument);
     }
 
     @Override
-    public Object get() {
+    public String get() {
         return argument;
     }
 }

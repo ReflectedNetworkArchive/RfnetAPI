@@ -1,6 +1,6 @@
 package network.reflected.rfnetapi.commands;
 
-import lombok.*;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public abstract class CommandArg {
@@ -15,6 +15,8 @@ public abstract class CommandArg {
     public static CommandArg parse(String arg) {
         if (PlayerArg.is(arg)) {
             return new PlayerArg(arg);
+        } else if (BoolArg.is(arg)) {
+            return new BoolArg(arg);
         } else if (IntArg.is(arg)) {
             return new IntArg(arg);
         } else if (DoubleArg.is(arg)) {

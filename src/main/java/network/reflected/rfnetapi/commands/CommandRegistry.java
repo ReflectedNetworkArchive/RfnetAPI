@@ -1,12 +1,10 @@
-package network.reflected.rfnetapi;
+package network.reflected.rfnetapi.commands;
 
 import io.papermc.paper.event.player.AsyncChatEvent;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
-import network.reflected.rfnetapi.commands.CommandArg;
-import network.reflected.rfnetapi.commands.CommandRunnable;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
@@ -15,9 +13,12 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class CommandRegistry implements Listener { // TODO: Needs testing
+public class CommandRegistry implements Listener {
     Map<String, Command> commands = new HashMap<>();
 
     public void registerCommand(CommandRunnable command, String permission, int numberOfArgs, String name) {
@@ -48,29 +49,30 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
     }
 
     private boolean executeCommand(CommandSender commandSender, String commandStr) {
-        String[] tokenized = tokenize(commandStr);
-        if (!commands.containsKey(tokenized[0])) {
+        List<String> tokenized = tokenize(commandStr);
+        Command command = commands.get(tokenized.get(0));
+        if (command == null) {
             return false;
         }
-        Command command = commands.get(commandStr);
 
         if (!command.permission.equals("") && !commandSender.hasPermission(command.permission)) {
             return false; // If they don't have permission, pretend the command doesn't exist.
         }
 
-        if (tokenized.length - 1 != command.argCount) {
+        if (tokenized.size() - 1 != command.argCount) {
             commandSender.sendMessage(Component.text("This command expects " + command.argCount + " arguments."));
             return true;
         }
 
+        tokenized.remove(0);
         command.getRunnable().run(
                 commandSender,
-                command.argCount == 0 ? null : CommandArg.parse(Arrays.copyOfRange(tokenized, 1, tokenized.length - 1))
+                CommandArg.parse(tokenized.toArray(new String[0]))
         );
         return true;
     }
 
-    private static String[] tokenize(String input) {
+    private static List<String> tokenize(String input) {
         List<String> tokens = new ArrayList<>();
         boolean inquotes = false;
         StringBuilder currentToken = new StringBuilder();
@@ -102,8 +104,7 @@ public class CommandRegistry implements Listener { // TODO: Needs testing
             }
         }
         if (!currentToken.toString().equals("")) tokens.add(currentToken.toString());
-        String[] returnArr = new String[tokens.size()];
-        return tokens.toArray(returnArr);
+        return tokens;
     }
 
     @EventHandler

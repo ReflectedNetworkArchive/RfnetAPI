@@ -1,8 +1,8 @@
 package network.reflected.rfnetapi.commands;
 
-public class DoubleArg extends CommandArg{
+public class DoubleArg extends CommandArg {
     double argument;
-    boolean isValid = false;
+    boolean isValid;
 
     public DoubleArg(String originalArgument) {
         super(originalArgument);

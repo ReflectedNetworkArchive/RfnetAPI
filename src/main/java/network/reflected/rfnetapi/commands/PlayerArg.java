@@ -12,12 +12,16 @@ public class PlayerArg extends CommandArg {
 
     public PlayerArg(String originalArgument) {
         super(originalArgument);
-        if (Bukkit.getPlayer(UUID.fromString(originalArgument)) != null) {
-            player = UUID.fromString(originalArgument);
-        } else if (Bukkit.getPlayer(originalArgument) != null) {
-            player = Bukkit.getPlayer(originalArgument).getUniqueId();
-        } else if (Bukkit.getPlayer("." + originalArgument) != null && FloodgateAPI.isBedrockPlayer(Objects.requireNonNull(Bukkit.getPlayer("." + originalArgument)))) {
-            player = Bukkit.getPlayer("." + originalArgument).getUniqueId();
+        try {
+            if (Bukkit.getPlayer(UUID.fromString(originalArgument)) != null) {
+                player = UUID.fromString(originalArgument);
+            }
+        } catch (IllegalArgumentException e) {
+            if (Bukkit.getPlayer(originalArgument) != null) {
+                player = Objects.requireNonNull(Bukkit.getPlayer(originalArgument)).getUniqueId();
+            } else if (Bukkit.getPlayer("." + originalArgument) != null && FloodgateAPI.isBedrockPlayer(Objects.requireNonNull(Bukkit.getPlayer("." + originalArgument)))) {
+                player = Objects.requireNonNull(Bukkit.getPlayer("." + originalArgument)).getUniqueId();
+            }
         }
     }
 

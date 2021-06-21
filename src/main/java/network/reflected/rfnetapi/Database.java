@@ -4,11 +4,13 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
+import lombok.Getter;
 import org.bukkit.Bukkit;
+
+import java.util.UUID;
 
 // Abstracts away database so I can swap it out easier, since I
 // would only have to change code in here. Also takes in a config
@@ -18,10 +20,10 @@ import org.bukkit.Bukkit;
 public class Database {
     private RedisClient redisClient;
     private StatefulRedisConnection<String, String> redisConnection;
-    private MongoDatabase database;
-    private MongoClient mongoClient;
+    @Getter private MongoClient mongoClient;
     private ServerConfig serverConfig;
     private boolean connected = false;
+    @Getter private boolean available = false;
 
     public Database(ServerConfig serverConfig) {
         this.serverConfig = serverConfig;
@@ -37,7 +39,6 @@ public class Database {
                     .retryWrites(true)
                     .build();
             mongoClient = MongoClients.create(settings);
-            database = mongoClient.getDatabase("purchasedata");
 
             // Lettuce initialization
             redisClient = RedisClient.create();
@@ -59,6 +60,7 @@ public class Database {
 
     // Registers or un-registers this server with ServerDiscovery
     public void setAvailable(boolean available) {
+        this.available = available;
         if (available) {
             // Register this server by adding it to a set of server ids.
             redisConnection.sync().sadd("servers", serverConfig.getId());
@@ -118,6 +120,14 @@ public class Database {
                 "players",
                 String.valueOf(Bukkit.getOnlinePlayers().size())
         );
+    }
+
+    public boolean getBusyChangingPwd(UUID player) {
+        return Boolean.parseBoolean(redisConnection.sync().get("changinpassword-" + player.toString()));
+    }
+
+    public void setBusyChangingPwd(UUID player, Boolean isBusy) {
+        redisConnection.sync().set("changinpassword-" + player.toString(), String.valueOf(isBusy));
     }
 
     // Shutdown database stuff. Please call this fn or me and the databases will cry.
