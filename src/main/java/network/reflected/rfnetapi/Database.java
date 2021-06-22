@@ -10,6 +10,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import lombok.Getter;
 import org.bukkit.Bukkit;
 
+import java.util.Set;
 import java.util.UUID;
 
 // Abstracts away database so I can swap it out easier, since I
@@ -120,6 +121,19 @@ public class Database {
                 "players",
                 String.valueOf(Bukkit.getOnlinePlayers().size())
         );
+    }
+
+    public int getTotalPlayercount(String archetype) {
+        Set<String> servers = redisConnection.sync().smembers("servers");
+
+        int players = 0;
+        for (String serverId : servers) {
+            if (redisConnection.sync().hget("server:" + serverId, "archetype").equals(archetype)) {
+                players += Integer.parseInt(redisConnection.sync().hget("server:" + serverId, "players"));
+            }
+        }
+
+        return players;
     }
 
     public boolean getBusyChangingPwd(UUID player) {
