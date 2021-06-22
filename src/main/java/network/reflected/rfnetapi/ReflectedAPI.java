@@ -79,6 +79,10 @@ public class ReflectedAPI {
         plugin.getDatabase().setAvailable(available);
     }
 
+    public void restart() {
+        plugin.restart();
+    }
+
     public void sendPlayer(Player player, String archetype) {
         plugin.sendPlayer(player, archetype);
     }
