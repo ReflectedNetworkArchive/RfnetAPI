@@ -70,6 +70,9 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
             // Start by setting up the SWM plugin
             getLogger().info("Getting SWM plugin.");
             try {
+                if (Bukkit.getPluginManager().getPlugin("SlimeWorldManager") == null) {
+                    throw new NoClassDefFoundError();
+                }
                 SWMPlugin slime = SWMPlugin.getInstance();
                 if (slime != null) { // If slime plugin can't be found, we're not on a minigame server.
                     getLogger().info("Configuring worlds...");
@@ -109,8 +112,8 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
                         getServer().shutdown();
                     }
                 }
-            } catch (Exception e) {
-                getLogger().info("An error occured when attempting to load a world, so minigame world support has been disabled.");
+            } catch (NoClassDefFoundError e) {
+                getLogger().info("An error occured when attempting to load SWM, so minigame world support has been disabled.");
             }
 
             // Add this server's information to Redis for ServerDiscovery.
