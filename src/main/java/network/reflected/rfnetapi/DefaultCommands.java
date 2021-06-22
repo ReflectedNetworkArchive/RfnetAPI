@@ -95,5 +95,9 @@ public class DefaultCommands {
                 "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" +
                 "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
         )), 0, "clear"));
+
+        ReflectedAPI.get((api -> api.getCommandProvider().registerCommand((executor, arguments) -> {
+            api.restart();
+        }, "rfnet.restart", 0, "restart")));
     }
 }
