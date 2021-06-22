@@ -149,13 +149,15 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
     }
 
 
-    public void restart() {
-        ReflectedAPI.get().setAvailable(false);
+    public void restart(String game) {
+        database.setAvailable(false);
 
         // Send everybody to another server
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            ReflectedAPI.get().sendPlayer(player, ReflectedAPI.get().getPlugin().getServerConfig().getArchetype());
-        }
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                sendPlayer(player, game);
+            }
+        },  20);
 
         // Wait one second so players don't get Server Closed before being sent back to lobby
         Bukkit.getScheduler().runTaskLater(this, () -> {
@@ -171,6 +173,6 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
                 }
             }));
             Bukkit.shutdown();
-        }, 20);
+        }, 40);
     }
 }

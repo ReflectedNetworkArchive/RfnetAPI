@@ -79,8 +79,8 @@ public class ReflectedAPI {
         plugin.getDatabase().setAvailable(available);
     }
 
-    public void restart() {
-        plugin.restart();
+    public void restart(String game) {
+        plugin.restart(game);
     }
 
     public void sendPlayer(Player player, String archetype) {
