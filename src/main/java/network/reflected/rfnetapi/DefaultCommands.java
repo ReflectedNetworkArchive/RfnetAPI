@@ -99,5 +99,9 @@ public class DefaultCommands {
         ReflectedAPI.get((api -> api.getCommandProvider().registerCommand((executor, arguments) -> {
             api.restart();
         }, "rfnet.restart", 0, "restart")));
+
+        ReflectedAPI.get((api -> api.getCommandProvider().registerCommand((executor, arguments) -> {
+            api.restart();
+        }, "rfnet.restart", 0, "fakerestart")));
     }
 }
