@@ -2,6 +2,6 @@ name: RfnetAPI
 version: ${project.version}
 main: network.reflected.rfnetapi.RfnetAPI
 load: STARTUP
-depend:
+softdepend:
   - SlimeWorldManager
 api-version: 1.16

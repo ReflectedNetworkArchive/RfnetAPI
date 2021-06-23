@@ -110,16 +110,18 @@ public class Database {
             // Un-register this server. The metadata is left in for speed, since it'll probably
             // be reused when this server restarts.
             redisConnection.sync().srem("servers", serverConfig.getId());
+
+            updatePlayerCount(0);
         }
     }
 
     // Updates the player count so that the bungee doesn't send
     // too many and cause them to get kicked.
-    public void updatePlayerCount() {
+    public void updatePlayerCount(int playerct) {
         redisConnection.sync().hset(
                 "server:" + serverConfig.getId(),
                 "players",
-                String.valueOf(Bukkit.getOnlinePlayers().size())
+                String.valueOf(playerct)
         );
     }
 

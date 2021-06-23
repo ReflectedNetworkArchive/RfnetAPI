@@ -790,15 +790,15 @@ public class PurchaseAPI implements Listener {
         }
     }
 
-    interface IntegerCallback {
+    public interface IntegerCallback {
         void run(int result);
     }
 
-    interface BooleanCallback {
+    public interface BooleanCallback {
         void run(boolean result);
     }
 
-    interface ProductCallback {
+    public interface ProductCallback {
         void run(Product result);
     }
 
