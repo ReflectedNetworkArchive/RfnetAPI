@@ -15,6 +15,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -149,6 +150,12 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
             location.setWorld(Bukkit.getWorld(loadedMapName));
             event.getPlayer().teleport(location);
         }
+        database.updatePlayerCount();
+    }
+
+    @EventHandler
+    private void playerQuit(PlayerQuitEvent event) {
+        database.updatePlayerCount();
     }
 
 
