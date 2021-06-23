@@ -25,6 +25,9 @@ import java.util.Random;
 import java.util.logging.Level;
 
 public final class RfnetAPI extends JavaPlugin implements Listener {
+    private final int ver = 7; // The current version
+    private boolean disabledForUpdate = false;
+
     @Getter private ReflectedAPI api;
     @Getter private final ServerConfig serverConfig = new ServerConfig();
     @Getter private final Database database = new Database(serverConfig);
@@ -124,6 +127,13 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (!disabledForUpdate) {
+            updateCheck();
+            genericDisable();
+        }
+    }
+
+    public void genericDisable() {
         // Remove this server from the list of ones that are connectable
         database.setAvailable(false);
         // And then close the connections to the database
@@ -160,17 +170,24 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
 
     public void restart() {
-        ReflectedAPI.get().setAvailable(false);
+        genericDisable();
 
         // Send everybody to another server
         for (Player player : Bukkit.getOnlinePlayers()) {
             ReflectedAPI.get().sendPlayer(player, ReflectedAPI.get().getPlugin().getServerConfig().getArchetype());
         }
 
+        updateCheck();
+
         // Wait one second so players don't get Server Closed before being sent back to lobby
         Bukkit.getScheduler().runTaskLater(this, () -> {
             Runtime runtime = Runtime.getRuntime();
             runtime.addShutdownHook(new Thread(() -> {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 ProcessBuilder processBuilder = new ProcessBuilder("nohup", "sh", "restart.sh");
                 try {
                     processBuilder.directory(new File("."));
@@ -182,5 +199,22 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
             }));
             Bukkit.shutdown();
         }, 20);
+    }
+
+    public void updateCheck() {
+        // Check for updates
+        int nextVer = ver + 1;
+        String updateOneLiner = "wget https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/network/reflected/RfnetAPI/" + nextVer + "/RfnetAPI-" + nextVer + ".jar --http-user=$(cat ~/.spaceauth/user) --http-password=$(cat ~/.spaceauth/passwd)";
+        ProcessBuilder updProcessBuilder = new ProcessBuilder("nohup", "sh", updateOneLiner);
+        try {
+            updProcessBuilder.directory(new File("./plugins/"));
+            updProcessBuilder.redirectErrorStream(false);
+            Process updateProcess = updProcessBuilder.start();
+            if (updateProcess.waitFor() == 0) {
+                new File("./plugins/RfnetAPI-" + ver + ".jar").deleteOnExit();
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
