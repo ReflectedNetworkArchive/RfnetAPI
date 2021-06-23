@@ -8,6 +8,7 @@ import com.grinderwolf.swm.api.world.properties.SlimeProperties;
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap;
 import com.grinderwolf.swm.plugin.SWMPlugin;
 import lombok.Getter;
+import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -19,12 +20,20 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.Base64;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 
 public final class RfnetAPI extends JavaPlugin implements Listener {
+    private final int ver = 9; // The current version
+    private boolean disabledForUpdate = false;
+
     @Getter private ReflectedAPI api;
     @Getter private final ServerConfig serverConfig = new ServerConfig();
     @Getter private final Database database = new Database(serverConfig);
@@ -124,6 +133,13 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (!disabledForUpdate) {
+            updateCheck();
+            genericDisable();
+        }
+    }
+
+    public void genericDisable() {
         // Remove this server from the list of ones that are connectable
         database.setAvailable(false);
         // And then close the connections to the database
@@ -160,12 +176,16 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
 
     public void restart() {
-        ReflectedAPI.get().setAvailable(false);
+        disabledForUpdate = true;
+
+        genericDisable();
 
         // Send everybody to another server
         for (Player player : Bukkit.getOnlinePlayers()) {
             ReflectedAPI.get().sendPlayer(player, ReflectedAPI.get().getPlugin().getServerConfig().getArchetype());
         }
+
+        updateCheck();
 
         // Wait one second so players don't get Server Closed before being sent back to lobby
         Bukkit.getScheduler().runTaskLater(this, () -> {
@@ -182,5 +202,35 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
             }));
             Bukkit.shutdown();
         }, 20);
+    }
+
+    public void updateCheck() {
+        System.out.println("Checking for updates...");
+        // Check for updates
+        int nextVer = ver + 1;
+        String updateOneLiner = "/bin/wget  --http-user=$(/bin/cat ~/.spaceauth/user) --http-password=$(/bin/cat ~/.spaceauth/passwd)";
+        ProcessBuilder updProcessBuilder = new ProcessBuilder("/bin/bash", updateOneLiner);
+        // Credentials for a read-only user
+        String username = "31faf87b-0584-449b-b5b4-542b711fedfd";
+        String password = "eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJhdWQiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJvcmdEb21haW4iOiJyZWZsZWN0ZWRuZXR3b3JrIiwibmFtZSI6InNlcnZlci11cGRhdGVyIiwiaXNzIjoiaHR0cHM6XC9cL2pldGJyYWlucy5zcGFjZSIsInBlcm1fdG9rZW4iOiIzZE9ueW4zVjY4U0oiLCJwcmluY2lwYWxfdHlwZSI6IlNFUlZJQ0UiLCJpYXQiOjE2MjQ0Nzk3MDB9.BmoDM8WFtadwvF9506wpDugq7yNtaiCyWIzfX-cC4dGYSQgtTJrISH85fYI0ukD8E4_xFN74xmwa6Pc1gI6kCYICFkk1YIREsdAS08m4KCtAM4iK5YFAD2aodlIOgGVVon7EEqTM8KHBCjIyEVk9R-Vj8tLi37j4cnubfo7VkMk";
+
+        File download = new File("./plugins/RfnetAPI-" + nextVer + ".jar");
+        try {
+            FileOutputStream downloadStream = new FileOutputStream(download);
+            String basicAuthenticationEncoded = Base64.getEncoder().encodeToString((username + ":" + password).getBytes("UTF-8"));
+            URL url = new URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/network/reflected/RfnetAPI/" + nextVer + "/RfnetAPI-" + nextVer + ".jar");
+            URLConnection urlConnection = url.openConnection();
+            urlConnection.setRequestProperty("Authorization", "Basic " + basicAuthenticationEncoded);
+            IOUtils.copy(urlConnection.getInputStream(), downloadStream);
+
+            new File("./plugins/RfnetAPI-" + ver + ".jar").deleteOnExit();
+            System.out.println("Update complete!");
+        } catch (FileNotFoundException e) {
+            System.out.println("No update found!");
+            download.delete();
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Update failed! See error above!");
+        }
     }
 }
