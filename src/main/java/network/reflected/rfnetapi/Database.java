@@ -110,6 +110,8 @@ public class Database {
             // Un-register this server. The metadata is left in for speed, since it'll probably
             // be reused when this server restarts.
             redisConnection.sync().srem("servers", serverConfig.getId());
+
+            updatePlayerCount(0);
         }
     }
 
