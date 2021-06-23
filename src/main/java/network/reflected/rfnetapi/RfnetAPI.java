@@ -150,12 +150,12 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
             location.setWorld(Bukkit.getWorld(loadedMapName));
             event.getPlayer().teleport(location);
         }
-        database.updatePlayerCount();
+        database.updatePlayerCount(Bukkit.getOnlinePlayers().size());
     }
 
     @EventHandler
     private void playerQuit(PlayerQuitEvent event) {
-        database.updatePlayerCount();
+        database.updatePlayerCount(Bukkit.getOnlinePlayers().size() - 1);
     }
 
 

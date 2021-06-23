@@ -115,11 +115,11 @@ public class Database {
 
     // Updates the player count so that the bungee doesn't send
     // too many and cause them to get kicked.
-    public void updatePlayerCount() {
+    public void updatePlayerCount(int playerct) {
         redisConnection.sync().hset(
                 "server:" + serverConfig.getId(),
                 "players",
-                String.valueOf(Bukkit.getOnlinePlayers().size())
+                String.valueOf(playerct)
         );
     }
 
