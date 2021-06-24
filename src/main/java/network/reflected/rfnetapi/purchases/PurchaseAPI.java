@@ -160,8 +160,8 @@ public class PurchaseAPI implements Listener {
             if (executor instanceof Player && arguments[0] instanceof StringArg) {
 
                 purchaseWithShards(((StringArg) arguments[0]).get(), (Player) executor, (success) -> {
-                    if (!success) {
-                        executor.sendMessage(Component.text("Purchase failed!"));
+                    if (success) {
+                        executor.sendMessage(Component.text("Purchase succeeded!"));
                     }
                 });
             }
@@ -332,7 +332,6 @@ public class PurchaseAPI implements Listener {
                 hasItem(item, player, (has) -> {
                     if (product.isOneTimePurchase() && has) {
                         player.sendMessage(Component.text("You already own that item.").color(NamedTextColor.RED));
-                        authFailEffect(player);
                         callback.run(false);
                     } else {
                         authenticate(player, () -> givePlayerItem(player, item, (succeeded) -> {
@@ -360,12 +359,10 @@ public class PurchaseAPI implements Listener {
                     }
                 });
             } else {
-                authFailEffect(player);
                 player.sendMessage(Component.text("You don't have enough to buy that!").color(NamedTextColor.RED));
                 callback.run(false);
             }
         }), () -> {
-            authFailEffect(player);
             player.sendMessage(Component.text("Can't find that product.").color(NamedTextColor.RED));
             callback.run(false);
         });
