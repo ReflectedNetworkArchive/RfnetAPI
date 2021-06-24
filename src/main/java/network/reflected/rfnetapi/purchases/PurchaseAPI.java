@@ -754,13 +754,6 @@ public class PurchaseAPI implements Listener {
                         if (balance > 0) {
                             event.getPlayer().sendMessage(Component.text("POLICY ENFORCEMENT").color(NamedTextColor.RED).append(Component.text(" > ")).append(Component.text("You must have a PIN on your Shard Wallet because it contains Shards.").color(TextColor.color(36, 198, 166))));
                             authenticate(event.getPlayer(), () -> event.getPlayer().sendMessage(Component.text("Success! Your PIN has been set.").color(TextColor.color(200, 255, 230))), false, "PIN change", true);
-                        } else {
-                            event.getPlayer().sendMessage(
-                                    Component.text("WARNING! Your account has no PIN. Click here to create one & protect your Shard Wallet!")
-                                            .color(TextColor.color(200, 255, 230))
-                                            .clickEvent(ClickEvent.runCommand("/setpin"))
-                                            .hoverEvent(Component.text("Click to set a PIN!"))
-                            );
                         }
                     });
 
