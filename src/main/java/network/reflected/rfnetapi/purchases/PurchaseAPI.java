@@ -327,28 +327,36 @@ public class PurchaseAPI implements Listener {
     }
 
     public void purchaseWithShards(String item, Player player, BooleanCallback callback) {
-        authenticate(player, () -> getProduct(item, (product) -> getShardBalance(player, (balance) -> {
+        getProduct(item, (product) -> getShardBalance(player, (balance) -> {
             if (balance >= product.getPrice()) {
-                givePlayerItem(player, item, (succeeded) -> {
-                    if (succeeded) {
-                        addShards(player, -product.getPrice(), (tookShards) -> {
-                            if (tookShards) {
-                                authSuccessEffect(player);
-                                callback.run(true);
+                hasItem(item, player, (has) -> {
+                    if (product.isOneTimePurchase() && has) {
+                        player.sendMessage(Component.text("You already own that item.").color(NamedTextColor.RED));
+                        authFailEffect(player);
+                        callback.run(false);
+                    } else {
+                        authenticate(player, () -> givePlayerItem(player, item, (succeeded) -> {
+                            if (succeeded) {
+                                addShards(player, -product.getPrice(), (tookShards) -> {
+                                    if (tookShards) {
+                                        authSuccessEffect(player);
+                                        callback.run(true);
+                                    } else {
+                                        player.sendMessage(Component.text(
+                                                "Error charging you. You have received the product for free!" +
+                                                        " Please contact support with /discord so we can fix this problem" +
+                                                        " for others. (You'll get to keep your free item)"
+                                        ).color(NamedTextColor.RED));
+                                        authFailEffect(player);
+                                        callback.run(false);
+                                    }
+                                });
                             } else {
-                                player.sendMessage(Component.text(
-                                        "Error charging you. You have received the product for free!" +
-                                                " Please contact support with /discord so we can fix this problem" +
-                                                " for others. (You'll get to keep your free item)"
-                                ).color(NamedTextColor.RED));
+                                player.sendMessage(Component.text("Error buying that item. Do you already own it?").color(NamedTextColor.RED));
                                 authFailEffect(player);
                                 callback.run(false);
                             }
-                        });
-                    } else {
-                        player.sendMessage(Component.text("Error buying that item. Do you already own it?").color(NamedTextColor.RED));
-                        authFailEffect(player);
-                        callback.run(false);
+                        }), true, "Purchase " + item);
                     }
                 });
             } else {
@@ -360,7 +368,7 @@ public class PurchaseAPI implements Listener {
             authFailEffect(player);
             player.sendMessage(Component.text("Can't find that product.").color(NamedTextColor.RED));
             callback.run(false);
-        }), true, "Purchase " + item);
+        });
     }
 
     public void addShards(Player player, int amount, BooleanCallback callback) {
