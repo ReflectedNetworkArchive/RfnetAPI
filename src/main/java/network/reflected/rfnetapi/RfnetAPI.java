@@ -31,7 +31,7 @@ import java.util.Random;
 import java.util.logging.Level;
 
 public final class RfnetAPI extends JavaPlugin implements Listener {
-    private final int ver = 10; // The current version
+    private final int ver = 11; // The current version
     private boolean disabledForUpdate = false;
 
     @Getter private ReflectedAPI api;
@@ -133,6 +133,7 @@ public final class RfnetAPI extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        database.updatePlayerCount(0);
         if (!disabledForUpdate) {
             updateCheck();
             genericDisable();
