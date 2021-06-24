@@ -160,8 +160,8 @@ public class PurchaseAPI implements Listener {
             if (executor instanceof Player && arguments[0] instanceof StringArg) {
 
                 purchaseWithShards(((StringArg) arguments[0]).get(), (Player) executor, (success) -> {
-                    if (!success) {
-                        executor.sendMessage(Component.text("Purchase failed!"));
+                    if (success) {
+                        executor.sendMessage(Component.text("Purchase succeeded!"));
                     }
                 });
             }
@@ -327,40 +327,45 @@ public class PurchaseAPI implements Listener {
     }
 
     public void purchaseWithShards(String item, Player player, BooleanCallback callback) {
-        authenticate(player, () -> getProduct(item, (product) -> getShardBalance(player, (balance) -> {
+        getProduct(item, (product) -> getShardBalance(player, (balance) -> {
             if (balance >= product.getPrice()) {
-                givePlayerItem(player, item, (succeeded) -> {
-                    if (succeeded) {
-                        addShards(player, -product.getPrice(), (tookShards) -> {
-                            if (tookShards) {
-                                authSuccessEffect(player);
-                                callback.run(true);
+                hasItem(item, player, (has) -> {
+                    if (product.isOneTimePurchase() && has) {
+                        player.sendMessage(Component.text("You already own that item.").color(NamedTextColor.RED));
+                        callback.run(false);
+                    } else {
+                        authenticate(player, () -> givePlayerItem(player, item, (succeeded) -> {
+                            if (succeeded) {
+                                addShards(player, -product.getPrice(), (tookShards) -> {
+                                    if (tookShards) {
+                                        authSuccessEffect(player);
+                                        callback.run(true);
+                                    } else {
+                                        player.sendMessage(Component.text(
+                                                "Error charging you. You have received the product for free!" +
+                                                        " Please contact support with /discord so we can fix this problem" +
+                                                        " for others. (You'll get to keep your free item)"
+                                        ).color(NamedTextColor.RED));
+                                        authFailEffect(player);
+                                        callback.run(false);
+                                    }
+                                });
                             } else {
-                                player.sendMessage(Component.text(
-                                        "Error charging you. You have received the product for free!" +
-                                                " Please contact support with /discord so we can fix this problem" +
-                                                " for others. (You'll get to keep your free item)"
-                                ).color(NamedTextColor.RED));
+                                player.sendMessage(Component.text("Error buying that item. Do you already own it?").color(NamedTextColor.RED));
                                 authFailEffect(player);
                                 callback.run(false);
                             }
-                        });
-                    } else {
-                        player.sendMessage(Component.text("Error buying that item. Do you already own it?").color(NamedTextColor.RED));
-                        authFailEffect(player);
-                        callback.run(false);
+                        }), true, "Purchase " + item);
                     }
                 });
             } else {
-                authFailEffect(player);
                 player.sendMessage(Component.text("You don't have enough to buy that!").color(NamedTextColor.RED));
                 callback.run(false);
             }
         }), () -> {
-            authFailEffect(player);
             player.sendMessage(Component.text("Can't find that product.").color(NamedTextColor.RED));
             callback.run(false);
-        }), true, "Purchase " + item);
+        });
     }
 
     public void addShards(Player player, int amount, BooleanCallback callback) {
@@ -746,13 +751,6 @@ public class PurchaseAPI implements Listener {
                         if (balance > 0) {
                             event.getPlayer().sendMessage(Component.text("POLICY ENFORCEMENT").color(NamedTextColor.RED).append(Component.text(" > ")).append(Component.text("You must have a PIN on your Shard Wallet because it contains Shards.").color(TextColor.color(36, 198, 166))));
                             authenticate(event.getPlayer(), () -> event.getPlayer().sendMessage(Component.text("Success! Your PIN has been set.").color(TextColor.color(200, 255, 230))), false, "PIN change", true);
-                        } else {
-                            event.getPlayer().sendMessage(
-                                    Component.text("WARNING! Your account has no PIN. Click here to create one & protect your Shard Wallet!")
-                                            .color(TextColor.color(200, 255, 230))
-                                            .clickEvent(ClickEvent.runCommand("/setpin"))
-                                            .hoverEvent(Component.text("Click to set a PIN!"))
-                            );
                         }
                     });
 
