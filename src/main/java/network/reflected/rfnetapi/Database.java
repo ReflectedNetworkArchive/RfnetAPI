@@ -65,6 +65,7 @@ public class Database {
         if (available) {
             // Register this server by adding it to a set of server ids.
             redisConnection.sync().sadd("servers", serverConfig.getId());
+            redisConnection.sync().sadd("allservers", serverConfig.getId());
 
             // Register the settings for this type of server, and this server as a valid archetype
             redisConnection.sync().sadd("archetypes", serverConfig.getArchetype());
@@ -124,7 +125,7 @@ public class Database {
     }
 
     public int getTotalPlayercount(String archetype) {
-        Set<String> servers = redisConnection.sync().smembers("servers");
+        Set<String> servers = redisConnection.sync().smembers("allservers");
 
         int players = 0;
         for (String serverId : servers) {
@@ -137,11 +138,11 @@ public class Database {
     }
 
     public boolean getBusyChangingPwd(UUID player) {
-        return Boolean.parseBoolean(redisConnection.sync().get("changinpassword-" + player.toString()));
+        return Boolean.parseBoolean(redisConnection.sync().get("changingpassword-" + player.toString()));
     }
 
     public void setBusyChangingPwd(UUID player, Boolean isBusy) {
-        redisConnection.sync().set("changinpassword-" + player.toString(), String.valueOf(isBusy));
+        redisConnection.sync().set("changingpassword-" + player.toString(), String.valueOf(isBusy));
     }
 
     // Shutdown database stuff. Please call this fn or me and the databases will cry.
