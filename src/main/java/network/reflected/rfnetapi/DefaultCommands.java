@@ -1,12 +1,22 @@
 package network.reflected.rfnetapi;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import net.kyori.adventure.inventory.Book;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import network.reflected.rfnetapi.commands.StringArg;
 import org.bukkit.entity.Player;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.List;
 
 public class DefaultCommands {
@@ -18,7 +28,11 @@ public class DefaultCommands {
     public static void initialize() {
         ReflectedAPI.get((api -> api.getCommandProvider().registerCommand((executor, arguments) -> {
                 if (executor instanceof Player && arguments[0] instanceof StringArg && availableGames.contains(arguments[0].get())) {
-                    api.sendPlayer((Player) executor, ((StringArg) arguments[0]).get());
+                    if (arguments[0].get().equals("survival")) {
+                        checkVoteAndSendToSurvival((Player) executor);
+                    } else {
+                        api.sendPlayer((Player) executor, ((StringArg) arguments[0]).get());
+                    }
                 }
         }, 1, "game")));
 
@@ -103,5 +117,43 @@ public class DefaultCommands {
         ReflectedAPI.get((api -> api.getCommandProvider().registerCommand((executor, arguments) -> {
             api.restart();
         }, "rfnet.restart", 0, "fakerestart")));
+    }
+
+    private static void checkVoteAndSendToSurvival(Player player) {
+        try {
+            URL url = new URL("https://reflected.network/voted/" + player.getName());
+            URLConnection connection = null;
+            connection = url.openConnection();
+            InputStream inputStream = connection.getInputStream();
+            InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            StringBuilder builder = new StringBuilder();
+            bufferedReader.lines().forEach(builder::append);
+
+            JsonObject result = new Gson().fromJson(builder.toString(), JsonObject.class);
+            Boolean voted = result.get("voted").getAsBoolean();
+
+            if (voted) {
+                ReflectedAPI.get(api -> api.sendPlayer(player, "survival"));
+            } else {
+                player.sendMessage(Component.text("You need to vote before joining survival."));
+                player.openBook(
+                        Book.book(
+                                Component.text(""),
+                                Component.text(""),
+                                Component.text("\n\n\nUse the link below vote.\n   ")
+                                        .color(NamedTextColor.BLACK)
+                                        .append(Component.text("Click to open!")
+                                                .clickEvent(ClickEvent.openUrl("https://reflected.network/vote"))
+                                                .color(NamedTextColor.GREEN)
+                                                .decoration(TextDecoration.UNDERLINED, TextDecoration.State.TRUE)
+                                                .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)
+                                        )
+                        )
+                );
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
