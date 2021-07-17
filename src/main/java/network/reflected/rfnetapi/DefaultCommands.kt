@@ -1,0 +1,188 @@
+package network.reflected.rfnetapi
+
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import net.kyori.adventure.inventory.Book
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.event.ClickEvent
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
+import net.kyori.adventure.text.format.TextDecoration
+import network.reflected.rfnetapi.ReflectedAPI.Companion.get
+import network.reflected.rfnetapi.commands.CommandArguments
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
+import java.net.URL
+
+object DefaultCommands {
+    private var availableGames = listOf(
+        "spleefrun",
+        "survival",
+        "squidwars",
+        "dev"
+    )
+
+    fun initialize() {
+        get().commandProvider.registerCommand({ executor: CommandSender, arguments: CommandArguments ->
+            if (availableGames.contains(arguments.getString(0))) {
+                if (executor is Player) {
+                    if (arguments.getString(0) == "dev") {
+                        if (executor.hasPermission("rfnet.devserver")) {
+                            get().sendPlayer(executor, "dev")
+                        } else {
+                            executor.sendMessage(Component.text("That server is protected.").color(NamedTextColor.RED))
+                        }
+                    } else if (arguments.getString(0) == "survival") {
+                        checkVoteAndSendToSurvival(executor)
+                    } else {
+                        get().sendPlayer(executor, arguments.getString(0))
+                    }
+                } else {
+                    executor.sendMessage(Component.text("Only players can connect to servers.").color(NamedTextColor.RED))
+                }
+            } else {
+                executor.sendMessage(Component.text("That game does not exist.").color(NamedTextColor.RED))
+            }
+        }, 1, "game")
+
+        get().commandProvider.registerCommand({ executor: CommandSender, _ ->
+            executor.sendMessage(
+                Component.text("\n").append(
+                    Component.text("Click the link below to join our discord!\n")
+                ).append(
+                    Component.text("--> ")
+                        .color(TextColor.color(36, 198, 166))
+                        .append(
+                            Component.text("https://discord.gg/avECNchTCf").clickEvent(
+                                ClickEvent.openUrl("https://discord.gg/avECNchTCf")
+                            ).color(TextColor.color(255, 253, 68))
+                        ).append(
+                            Component.text(" <--\n").color(TextColor.color(36, 198, 166))
+                        )
+                )
+            )
+        }, 0, "discord")
+
+        get().commandProvider.registerCommands({ executor: CommandSender, _ ->
+            if (executor is Player) {
+                get().sendPlayer(executor, "lobby")
+            }
+        }, 0, "hub", "lobby")
+
+        get().commandProvider.registerCommand({ executor: CommandSender, _ ->
+            executor.sendMessage(
+                Component.text("\n")
+                    .append(Component.text("Command List"))
+                    .append(Component.text(" Click one to run it.").color(NamedTextColor.GRAY))
+                    .append(
+                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
+                            .append(
+                                Component.text("/discord")
+                                    .clickEvent(ClickEvent.runCommand("/discord"))
+                                    .color(TextColor.color(255, 253, 68))
+                                    .append(
+                                        Component.text(" - Get help from our discord")
+                                            .color(TextColor.color(36, 198, 166))
+                                    )
+                            )
+                    )
+                    .append(
+                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
+                            .append(
+                                Component.text("/balance")
+                                    .clickEvent(ClickEvent.runCommand("/balance"))
+                                    .color(TextColor.color(255, 253, 68))
+                                    .append(
+                                        Component.text(" - Check how many shards you have")
+                                            .color(TextColor.color(36, 198, 166))
+                                    )
+                            )
+                    )
+                    .append(
+                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
+                            .append(
+                                Component.text("/lobby")
+                                    .clickEvent(ClickEvent.runCommand("/lobby"))
+                                    .color(TextColor.color(255, 253, 68))
+                                    .append(
+                                        Component.text(" - Get back to the main lobby")
+                                            .color(TextColor.color(36, 198, 166))
+                                    )
+                            )
+                    ).append(
+                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
+                            .append(
+                                Component.text("/setpin")
+                                    .clickEvent(ClickEvent.runCommand("/setpin"))
+                                    .color(TextColor.color(255, 253, 68))
+                                    .append(
+                                        Component.text(" - Set or change the PIN on your account")
+                                            .color(TextColor.color(36, 198, 166))
+                                    )
+                            )
+                    ).append(
+                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
+                            .append(
+                                Component.text("/purchasehistory")
+                                    .clickEvent(ClickEvent.runCommand("/purchasehistory"))
+                                    .color(TextColor.color(255, 253, 68))
+                                    .append(Component.text(" - See your receipts").color(TextColor.color(36, 198, 166)))
+                            )
+                    ).append(Component.text("\n"))
+            )
+        }, 0, "help")
+
+        get().commandProvider.registerCommand(
+            { _, _ -> get().restart() },
+            "rfnet.restart",
+            0,
+            "restart"
+        )
+
+        get().commandProvider.registerCommand(
+            { _, _ -> get().restart() },
+            "rfnet.restart",
+            0,
+            "fakerestart"
+        )
+    }
+
+    private fun checkVoteAndSendToSurvival(player: Player) {
+        try {
+            val url = URL("https://reflected.network/voted/" + player.name)
+            val connection = url.openConnection()
+            val inputStream = connection.getInputStream()
+            val inputStreamReader = InputStreamReader(inputStream)
+            val bufferedReader = BufferedReader(inputStreamReader)
+            val builder = StringBuilder()
+            bufferedReader.lines().forEach { str: String? -> builder.append(str) }
+            val result = Gson().fromJson(builder.toString(), JsonObject::class.java)
+            val voted = result["voted"].asBoolean
+            if (voted) {
+                get().sendPlayer(player, "survival")
+            } else {
+                player.sendMessage(Component.text("You need to vote before joining survival."))
+                player.openBook(
+                    Book.book(
+                        Component.text(""),
+                        Component.text(""),
+                        Component.text("\n\n\nUse the link below vote.\n   ")
+                            .color(NamedTextColor.BLACK)
+                            .append(
+                                Component.text("Click to open!")
+                                    .clickEvent(ClickEvent.openUrl("https://reflected.network/vote"))
+                                    .color(NamedTextColor.GREEN)
+                                    .decoration(TextDecoration.UNDERLINED, TextDecoration.State.TRUE)
+                                    .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)
+                            )
+                    )
+                )
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+    }
+}
