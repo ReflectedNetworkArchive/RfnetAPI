@@ -165,7 +165,12 @@ class PurchaseAPI : Listener {
             purchases.updateOne(purchaseFilter, set("history", purchaseHistory))
             purchases.updateOne(purchaseFilter, set("needsToSee", true))
 
-            val event = PurchaseSuccessEvent(product, player)
+            val event = PurchaseSuccessEvent(
+                JProduct(
+                    product.price,
+                    product.name,
+                    product.oneTimePurchase
+                ), player)
             Bukkit.getPluginManager().callEvent(event)
         }
     }

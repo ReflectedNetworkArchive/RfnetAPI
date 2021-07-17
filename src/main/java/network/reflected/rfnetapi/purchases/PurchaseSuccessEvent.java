@@ -11,15 +11,15 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PurchaseSuccessEvent extends Event {
     private static final HandlerList handlers = new HandlerList();
-    protected Product product;
+    protected JProduct product;
     protected Player purchaser;
 
-    public PurchaseSuccessEvent(@NotNull Product product, @NotNull Player purchaser) {
+    public PurchaseSuccessEvent(@NotNull JProduct product, @NotNull Player purchaser) {
         this.product = product;
         this.purchaser = purchaser;
     }
 
-    public Product getPurchasedProduct() {
+    public JProduct getPurchasedProduct() {
         return this.product;
     }
 
