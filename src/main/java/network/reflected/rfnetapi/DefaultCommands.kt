@@ -116,25 +116,6 @@ object DefaultCommands {
                                             .color(TextColor.color(36, 198, 166))
                                     )
                             )
-                    ).append(
-                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
-                            .append(
-                                Component.text("/setpin")
-                                    .clickEvent(ClickEvent.runCommand("/setpin"))
-                                    .color(TextColor.color(255, 253, 68))
-                                    .append(
-                                        Component.text(" - Set or change the PIN on your account")
-                                            .color(TextColor.color(36, 198, 166))
-                                    )
-                            )
-                    ).append(
-                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
-                            .append(
-                                Component.text("/purchasehistory")
-                                    .clickEvent(ClickEvent.runCommand("/purchasehistory"))
-                                    .color(TextColor.color(255, 253, 68))
-                                    .append(Component.text(" - See your receipts").color(TextColor.color(36, 198, 166)))
-                            )
                     ).append(Component.text("\n"))
             )
         }, 0, "help")
