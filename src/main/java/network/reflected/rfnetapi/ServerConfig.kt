@@ -1,5 +1,6 @@
 package network.reflected.rfnetapi
 
+import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
@@ -52,7 +53,7 @@ class ServerConfig {
             out.close()
             `in`.close()
         } catch (e: Exception) {
-            e.printStackTrace()
+            ExceptionDispensary.report(e, "copying configuration")
         }
     }
 
@@ -69,7 +70,7 @@ class ServerConfig {
             bootConfig = YamlConfiguration.loadConfiguration(bootConfigFile)
         } catch (e: Exception) {
             missingMsg = "Error loading config file."
-            e.printStackTrace()
+            ExceptionDispensary.report(e, "loading configuration")
         }
         if (archetype == "REPLACE-THIS") {
             missingMsg = "You need to fill out bootconfig.yaml in your server's root directory."

@@ -5,6 +5,7 @@ import com.grinderwolf.swm.api.world.SlimeWorld
 import com.grinderwolf.swm.api.world.properties.SlimeProperties
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap
 import com.grinderwolf.swm.plugin.SWMPlugin
+import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import network.reflected.rfnetapi.purchases.PurchaseEvents
 import network.reflected.rfnetapi.purchases.PurchaseGUI
 import org.apache.commons.io.IOUtils
@@ -19,7 +20,6 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
@@ -59,6 +59,7 @@ class RfnetAPI : JavaPlugin(), Listener {
 
         server.pluginManager.registerEvents(PurchaseGUI, this)
         server.pluginManager.registerEvents(PurchaseEvents, this)
+        server.pluginManager.registerEvents(ExceptionDispensary, this)
 
         // Setup default commands, available on every server
         DefaultCommands.initialize()
@@ -104,7 +105,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                         minigameWorld = true
                     } catch (e: Exception) {
                         // If the map fails to load, there's nothing to connect to, so stop the server.
-                        e.printStackTrace()
+                        ExceptionDispensary.report(e, "loading map")
                         logger.log(Level.SEVERE, "Error loading a map! The server has to shut down!")
                         server.shutdown()
                     }
@@ -191,7 +192,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                     processBuilder.redirectErrorStream(false)
                     processBuilder.start()
                 } catch (e: IOException) {
-                    e.printStackTrace()
+                    ExceptionDispensary.report(e, "restarting")
                 }
             })
             Bukkit.shutdown()
@@ -199,31 +200,35 @@ class RfnetAPI : JavaPlugin(), Listener {
     }
 
     private fun updateCheck() {
-        println("Checking for updates...")
-        // Check for updates
-        val nextVer = ver + 1
-        // Credentials for a read-only user
-        val username = "31faf87b-0584-449b-b5b4-542b711fedfd"
-        val password =
-            "eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJhdWQiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJvcmdEb21haW4iOiJyZWZsZWN0ZWRuZXR3b3JrIiwibmFtZSI6InNlcnZlci11cGRhdGVyIiwiaXNzIjoiaHR0cHM6XC9cL2pldGJyYWlucy5zcGFjZSIsInBlcm1fdG9rZW4iOiIzZE9ueW4zVjY4U0oiLCJwcmluY2lwYWxfdHlwZSI6IlNFUlZJQ0UiLCJpYXQiOjE2MjQ0Nzk3MDB9.BmoDM8WFtadwvF9506wpDugq7yNtaiCyWIzfX-cC4dGYSQgtTJrISH85fYI0ukD8E4_xFN74xmwa6Pc1gI6kCYICFkk1YIREsdAS08m4KCtAM4iK5YFAD2aodlIOgGVVon7EEqTM8KHBCjIyEVk9R-Vj8tLi37j4cnubfo7VkMk"
-        val download = File("./plugins/RfnetAPI-$nextVer.jar")
         try {
-            val downloadStream = FileOutputStream(download)
-            val basicAuthenticationEncoded =
-                Base64.getEncoder().encodeToString("$username:$password".toByteArray(charset("UTF-8")))
-            val url =
-                URL("https://maven.pkg.jetbrains.space/reflectednetwork//internalapi/maven/network/reflected/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
-            val urlConnection = url.openConnection()
-            urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
-            IOUtils.copy(urlConnection.getInputStream(), downloadStream)
-            File("./plugins/RfnetAPI-$ver.jar").deleteOnExit()
-            println("Update complete!")
-        } catch (e: FileNotFoundException) {
-            println("No update found!")
-            download.delete()
+            println("Checking for updates...")
+            // Check for updates
+            val nextVer = ver + 1
+            // Credentials for a read-only user
+            val username = "31faf87b-0584-449b-b5b4-542b711fedfd"
+            val password =
+                "eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJhdWQiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJvcmdEb21haW4iOiJyZWZsZWN0ZWRuZXR3b3JrIiwibmFtZSI6InNlcnZlci11cGRhdGVyIiwiaXNzIjoiaHR0cHM6XC9cL2pldGJyYWlucy5zcGFjZSIsInBlcm1fdG9rZW4iOiIzZE9ueW4zVjY4U0oiLCJwcmluY2lwYWxfdHlwZSI6IlNFUlZJQ0UiLCJpYXQiOjE2MjQ0Nzk3MDB9.BmoDM8WFtadwvF9506wpDugq7yNtaiCyWIzfX-cC4dGYSQgtTJrISH85fYI0ukD8E4_xFN74xmwa6Pc1gI6kCYICFkk1YIREsdAS08m4KCtAM4iK5YFAD2aodlIOgGVVon7EEqTM8KHBCjIyEVk9R-Vj8tLi37j4cnubfo7VkMk"
+            val download = File("./plugins/RfnetAPI-$nextVer.jar")
+            try {
+                val downloadStream = FileOutputStream(download)
+                val basicAuthenticationEncoded =
+                    Base64.getEncoder().encodeToString("$username:$password".toByteArray(charset("UTF-8")))
+                val url =
+                    URL("https://maven.pkg.jetbrains.space/reflectednetwork//internalapi/maven/network/reflected/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
+                val urlConnection = url.openConnection()
+                urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
+                IOUtils.copy(urlConnection.getInputStream(), downloadStream)
+                File("./plugins/RfnetAPI-$ver.jar").deleteOnExit()
+                println("Update complete!")
+            } catch (e: IOException) { // We got a 404 or some other error meaning the file doesn't exist
+                println("No update found!")
+                download.delete()
+            } catch (e: Exception) {
+                ExceptionDispensary.report(e, "updating")
+                println("Update failed! See error above!")
+            }
         } catch (e: Exception) {
-            e.printStackTrace()
-            println("Update failed! See error above!")
+            ExceptionDispensary.report(e, "updating")
         }
     }
 }

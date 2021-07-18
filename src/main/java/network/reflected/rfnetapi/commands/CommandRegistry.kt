@@ -4,6 +4,7 @@ import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
+import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.event.EventHandler
@@ -62,8 +63,8 @@ class CommandRegistry : Listener {
             )
         } catch (error: ArgumentParseException) {
             commandSender.sendMessage(Component.text(error.errorText).color(NamedTextColor.RED))
-        } catch (error: Exception) {
-            error.printStackTrace()
+        } catch (e: Exception) {
+            ExceptionDispensary.reportAndNotify(e, "dispatching command", commandSender)
         }
         return true
     }
