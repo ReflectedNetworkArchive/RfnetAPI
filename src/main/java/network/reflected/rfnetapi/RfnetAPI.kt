@@ -102,22 +102,22 @@ class RfnetAPI : JavaPlugin(), Listener {
                         // And finally, find out which world to load.
                         logger.info("Looking for worlds to load.")
                         try {
-                            val loadedMap: SlimeWorld =
-                                if (serverConfig.maps.size == 1) { // There is only one map to choose
-                                    // Also that magic boolean before mapProperties is whether it's read only. No slime worlds we load
-                                    // would be good to make editable (they are all minigame maps)
-                                    slime.loadWorld(slimeMongoLoader, serverConfig.maps[0], true, mapProperties)
-                                } else { // A map must be chosen at random.
-                                    val maps = serverConfig.maps
-                                    val rand = Random()
-                                    // See above for what the magic boolean is
-                                    slime.loadWorld(
-                                        slimeMongoLoader,
-                                        maps[rand.nextInt(maps.size)],
-                                        true,
-                                        mapProperties
-                                    )
-                                }
+                            loadedMap = if (serverConfig.maps.size == 1) {
+                                // There is only one map to choose
+                                // Also that magic boolean before mapProperties is whether it's read only. No slime worlds we load
+                                // would be good to make editable (they are all minigame maps)
+                                slime.loadWorld(slimeMongoLoader, serverConfig.maps[0], true, mapProperties)
+                            } else { // A map must be chosen at random.
+                                val maps = serverConfig.maps
+                                val rand = Random()
+                                // See above for what the magic boolean is
+                                slime.loadWorld(
+                                    slimeMongoLoader,
+                                    maps[rand.nextInt(maps.size)],
+                                    true,
+                                    mapProperties
+                                )
+                            }
                             logger.info("Loading " + loadedMap.name)
                             slime.generateWorld(loadedMap)
                             minigameWorld = true
