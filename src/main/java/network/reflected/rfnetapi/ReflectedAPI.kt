@@ -1,5 +1,6 @@
 package network.reflected.rfnetapi
 
+import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import network.reflected.rfnetapi.commands.CommandRegistry
 import network.reflected.rfnetapi.purchases.PurchaseAPI
 import org.bukkit.Bukkit
@@ -12,25 +13,40 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
     val commandProvider = CommandRegistry()
 
     fun setAvailable(available: Boolean) {
-        plugin.database.setAvailable(available)
+        try {
+            plugin.database.setAvailable(available)
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "setting server availability")
+        }
     }
 
     fun restart() {
-        plugin.restart()
+        try {
+            plugin.restart()
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "restarting")
+        }
     }
 
     val database: Database
         get() = plugin.database
 
-    fun sendPlayer(player: Player?, archetype: String?) {
-        plugin.sendPlayer(player!!, archetype!!)
+    fun sendPlayer(player: Player, archetype: String) {
+        try {
+            plugin.sendPlayer(player, archetype)
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "sending player")
+        }
     }
 
     fun getLoadedMap(): World {
-        return if (plugin.minigameWorld) {
-            Bukkit.getWorlds()[0]
-        } else {
-            Bukkit.getWorld(plugin.loadedMap.name) ?: Bukkit.getWorlds()[0]
+        try {
+            return plugin.loadedMap?.let {
+                Bukkit.getWorld(it.name)
+            } ?: Bukkit.getWorlds()[0]
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "getting loaded map")
+            throw NullPointerException("Error whilst getting loaded map. This was reported to the internal exception log.")
         }
     }
 
