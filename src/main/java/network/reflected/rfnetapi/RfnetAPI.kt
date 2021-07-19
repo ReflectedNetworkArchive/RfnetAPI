@@ -28,7 +28,7 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    private val ver = 15 // The current version
+    private val ver = 16 // The current version
     private var disabledForUpdate = false
 
     var api: ReflectedAPI? = null
@@ -259,19 +259,16 @@ class RfnetAPI : JavaPlugin(), Listener {
                 val basicAuthenticationEncoded =
                     Base64.getEncoder().encodeToString("$username:$password".toByteArray(charset("UTF-8")))
                 val url =
-                    URL("https://maven.pkg.jetbrains.space/reflectednetwork//internalapi/maven/network/reflected/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
+                    URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/network/reflected/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
                 val urlConnection = url.openConnection()
                 urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
                 IOUtils.copy(urlConnection.getInputStream(), downloadStream)
                 File("./plugins/RfnetAPI-$ver.jar").deleteOnExit()
                 println("Update complete!")
-            } catch (e: IOException) { // We got a 404 or some other error meaning the file doesn't exist
+            } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
+                if (e.message?.contains("404") != true) throw e
                 println("No update found!")
                 download.delete()
-            } catch (e: Exception) {
-                ExceptionDispensary.report(e, "updating")
-                e.printStackTrace()
-                println("Update failed! See error above!")
             }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
