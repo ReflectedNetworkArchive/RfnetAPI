@@ -34,7 +34,7 @@ class RfnetAPI : JavaPlugin(), Listener {
     var api: ReflectedAPI? = null
     val serverConfig = ServerConfig()
     val database = Database(serverConfig)
-    lateinit var loadedMap: SlimeWorld
+    var loadedMap: SlimeWorld? = null
     var minigameWorld = false
 
     override fun onEnable() {
@@ -118,7 +118,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                                     mapProperties
                                 )
                             }
-                            logger.info("Loading " + loadedMap.name)
+                            logger.info("Loading ${loadedMap?.name}")
                             slime.generateWorld(loadedMap)
                             minigameWorld = true
                         } catch (e: Exception) {
@@ -190,9 +190,11 @@ class RfnetAPI : JavaPlugin(), Listener {
     private fun playerJoin(event: PlayerJoinEvent) {
         try {
             if (minigameWorld) {
-                val location = event.player.location
-                location.world = Bukkit.getWorld(loadedMap.name)
-                event.player.teleport(location)
+                loadedMap?.let {
+                    val location = event.player.location
+                    location.world = Bukkit.getWorld(it.name)
+                    event.player.teleport(location)
+                }
             }
             database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
         } catch (e: Exception) {
