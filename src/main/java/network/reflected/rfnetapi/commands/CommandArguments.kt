@@ -6,11 +6,11 @@ import java.util.*
 
 class CommandArguments(private val stringArguments: List<String>) {
     fun getString(index: Int): String {
-        return stringArguments[index]
+        return stringArguments[index+1]
     }
 
     fun getPlayer(index: Int): Player {
-        val argument = stringArguments[index]
+        val argument = stringArguments[index+1]
         return try {
             Bukkit.getPlayer(UUID.fromString(argument))
                 ?: throw ArgumentParseException("Argument ${index + 1} must be a player.")
@@ -20,7 +20,7 @@ class CommandArguments(private val stringArguments: List<String>) {
     }
 
     fun getInt(index: Int): Int {
-        val argument = stringArguments[index]
+        val argument = stringArguments[index+1]
         return if (argument.contains(".")) {
             throw ArgumentParseException("Argument ${index + 1} must be an integer.")
         } else {
@@ -34,7 +34,7 @@ class CommandArguments(private val stringArguments: List<String>) {
 
     fun getFloat(index: Int): Float {
         return try {
-            stringArguments[index].toFloat()
+            stringArguments[index+1].toFloat()
         } catch (error: NumberFormatException) {
             throw ArgumentParseException("Argument ${index + 1} must be an integer.")
         }
@@ -42,14 +42,14 @@ class CommandArguments(private val stringArguments: List<String>) {
 
     fun getDouble(index: Int): Double {
         return try {
-            stringArguments[index].toDouble()
+            stringArguments[index+1].toDouble()
         } catch (error: NumberFormatException) {
             throw ArgumentParseException("Argument ${index + 1} must be an integer.")
         }
     }
 
     fun getBoolean(index: Int): Boolean {
-        return when (stringArguments[index].lowercase()) {
+        return when (stringArguments[index+1].lowercase()) {
             "true" -> true
             "false" -> false
             "yes" -> true

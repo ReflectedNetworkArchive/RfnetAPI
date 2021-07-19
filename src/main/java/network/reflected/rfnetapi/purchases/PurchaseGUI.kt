@@ -2,13 +2,15 @@ package network.reflected.rfnetapi.purchases
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import network.reflected.rfnetapi.async.async
+import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import java.util.*
 
@@ -17,46 +19,74 @@ object PurchaseGUI : Listener {
     private val successCallbacks = hashMapOf<UUID, () -> Unit>()
 
     fun confirm(player: Player, success: () -> Unit, reason: String) {
-        if (successCallbacks.containsKey(player.uniqueId)) return
+        try {
+            successCallbacks.remove(player.uniqueId)
 
-        val inv = Bukkit.createInventory(null, InventoryType.HOPPER, title)
+            val inv = Bukkit.createInventory(player, 9, title)
 
-        val cancel = ItemStack(Material.RED_WOOL)
-        cancel.editMeta {
-            it.displayName(Component.text("Cancel Purchase").color(NamedTextColor.RED))
+            val cancel = ItemStack(Material.RED_WOOL)
+            cancel.editMeta {
+                it.displayName(
+                    Component.text("Cancel Purchase")
+                        .color(NamedTextColor.RED)
+                        .decoration(TextDecoration.ITALIC, false)
+                )
+            }
+            inv.setItem(3, cancel)
+
+            val lineItem = ItemStack(Material.PAPER)
+            lineItem.editMeta {
+                it.displayName(Component.text(reason))
+            }
+            inv.setItem(4, lineItem)
+
+            val confirm = ItemStack(Material.LIME_WOOL)
+            confirm.editMeta {
+                it.displayName(
+                    Component.text("Confirm Purchase")
+                        .color(NamedTextColor.GREEN)
+                        .decoration(TextDecoration.ITALIC, false)
+                )
+            }
+            inv.setItem(5, confirm)
+
+            player.openInventory(inv)
+
+            successCallbacks[player.uniqueId] = success
+        } catch (e: Exception) {
+            ExceptionDispensary.reportAndNotify(e, "opening confirm dialog", player)
         }
-        inv.setItem(3, cancel)
-
-        val lineItem = ItemStack(Material.PAPER)
-        lineItem.editMeta {
-            it.displayName(Component.text(reason))
-        }
-        inv.setItem(4, lineItem)
-
-        val confirm = ItemStack(Material.LIME_WOOL)
-        confirm.editMeta {
-            it.displayName(Component.text("Confirm Purchase").color(NamedTextColor.GREEN))
-        }
-        inv.setItem(5, confirm)
-
-        successCallbacks.put(player.uniqueId, success)
     }
 
     @EventHandler
     fun inventoryClickEvent(event: InventoryClickEvent) {
-        if (event.view.title() == title) {
-            event.isCancelled = true
-            when (event.currentItem?.type) {
-                Material.LIME_WOOL -> {
-                    val uuid = event.whoClicked.uniqueId
-                    successCallbacks[uuid]?.invoke()
-                    successCallbacks.remove(uuid)
+        try {
+            if (event.view.title() == title) {
+                event.isCancelled = true
+                when (event.currentItem?.type) {
+                    Material.LIME_WOOL -> {
+                        val uuid = event.whoClicked.uniqueId
+                        val player = Bukkit.getPlayer(uuid)
+                        val callback = successCallbacks[uuid]
+
+                        if (player != null && callback != null) {
+                            async {
+                                callback.invoke()
+                            }
+                            successCallbacks.remove(uuid)
+                        }
+
+                        event.view.close()
+                    }
+                    Material.RED_WOOL -> {
+                        event.view.close()
+                    }
+                    else -> {
+                    }
                 }
-                Material.RED_WOOL -> {
-                    event.view.close()
-                }
-                else -> {}
             }
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "confirm dialog click event")
         }
     }
 }

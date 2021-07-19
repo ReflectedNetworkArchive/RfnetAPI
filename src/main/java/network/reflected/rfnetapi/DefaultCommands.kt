@@ -2,6 +2,7 @@ package network.reflected.rfnetapi
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.mongodb.client.model.Filters
 import net.kyori.adventure.inventory.Book
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
@@ -9,6 +10,8 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import network.reflected.rfnetapi.ReflectedAPI.Companion.get
+import network.reflected.rfnetapi.async.async
+import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import network.reflected.rfnetapi.commands.CommandArguments
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -30,7 +33,7 @@ object DefaultCommands {
             if (availableGames.contains(arguments.getString(0))) {
                 if (executor is Player) {
                     if (arguments.getString(0) == "dev") {
-                        if (executor.hasPermission("rfnet.devserver")) {
+                        if (executor.hasPermission("rfnet.developer")) {
                             get().sendPlayer(executor, "dev")
                         } else {
                             executor.sendMessage(Component.text("That server is protected.").color(NamedTextColor.RED))
@@ -112,25 +115,6 @@ object DefaultCommands {
                                             .color(TextColor.color(36, 198, 166))
                                     )
                             )
-                    ).append(
-                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
-                            .append(
-                                Component.text("/setpin")
-                                    .clickEvent(ClickEvent.runCommand("/setpin"))
-                                    .color(TextColor.color(255, 253, 68))
-                                    .append(
-                                        Component.text(" - Set or change the PIN on your account")
-                                            .color(TextColor.color(36, 198, 166))
-                                    )
-                            )
-                    ).append(
-                        Component.text("\n @ ").color(TextColor.color(0, 0, 0))
-                            .append(
-                                Component.text("/purchasehistory")
-                                    .clickEvent(ClickEvent.runCommand("/purchasehistory"))
-                                    .color(TextColor.color(255, 253, 68))
-                                    .append(Component.text(" - See your receipts").color(TextColor.color(36, 198, 166)))
-                            )
                     ).append(Component.text("\n"))
             )
         }, 0, "help")
@@ -148,41 +132,61 @@ object DefaultCommands {
             0,
             "fakerestart"
         )
+
+        get().commandProvider.registerCommand(
+            { executor, arguments ->
+                val exceptions = get().database.getCollection("bugreps", "exceptions")
+                if (exceptions.deleteMany(Filters.eq("minid", arguments.getString(0))).deletedCount > 0) {
+                    executor.sendMessage(
+                        Component.text("☞ ")
+                            .color(NamedTextColor.GRAY)
+                            .append(
+                                Component.text("Item erased!")
+                                    .color(NamedTextColor.GREEN)
+                            )
+                    )
+                }
+            }, "rfnet.developer", 1, "excclear"
+        )
     }
 
     private fun checkVoteAndSendToSurvival(player: Player) {
         try {
-            val url = URL("https://reflected.network/voted/" + player.name)
-            val connection = url.openConnection()
-            val inputStream = connection.getInputStream()
-            val inputStreamReader = InputStreamReader(inputStream)
-            val bufferedReader = BufferedReader(inputStreamReader)
-            val builder = StringBuilder()
-            bufferedReader.lines().forEach { str: String? -> builder.append(str) }
-            val result = Gson().fromJson(builder.toString(), JsonObject::class.java)
-            val voted = result["voted"].asBoolean
-            if (voted) {
-                get().sendPlayer(player, "survival")
-            } else {
-                player.sendMessage(Component.text("You need to vote before joining survival."))
-                player.openBook(
-                    Book.book(
-                        Component.text(""),
-                        Component.text(""),
-                        Component.text("\n\n\nUse the link below vote.\n   ")
-                            .color(NamedTextColor.BLACK)
-                            .append(
-                                Component.text("Click to open!")
-                                    .clickEvent(ClickEvent.openUrl("https://reflected.network/vote"))
-                                    .color(NamedTextColor.GREEN)
-                                    .decoration(TextDecoration.UNDERLINED, TextDecoration.State.TRUE)
-                                    .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)
-                            )
+            async {
+                val url = URL("https://reflected.network/voted/" + player.name)
+                val connection = url.openConnection()
+                val inputStream = connection.getInputStream()
+                val inputStreamReader = InputStreamReader(inputStream)
+                val bufferedReader = BufferedReader(inputStreamReader)
+                val builder = StringBuilder()
+                bufferedReader.lines().forEach { str: String? -> builder.append(str) }
+                val result = Gson().fromJson(builder.toString(), JsonObject::class.java)
+                result["voted"].asBoolean
+            }.then {
+                if (it) {
+                    get().sendPlayer(player, "survival")
+                } else {
+                    player.sendMessage(Component.text("You need to vote before joining survival."))
+                    player.openInventory.close()
+                    player.openBook(
+                        Book.book(
+                            Component.text(""),
+                            Component.text(""),
+                            Component.text("\n\n\nUse the link below vote.\n   ")
+                                .color(NamedTextColor.BLACK)
+                                .append(
+                                    Component.text("Click to open!")
+                                        .clickEvent(ClickEvent.openUrl("https://reflected.network/vote"))
+                                        .color(NamedTextColor.GREEN)
+                                        .decoration(TextDecoration.UNDERLINED, TextDecoration.State.TRUE)
+                                        .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)
+                                )
+                        )
                     )
-                )
+                }
             }
         } catch (e: IOException) {
-            e.printStackTrace()
+            ExceptionDispensary.reportAndNotify(e, "checking vote status", player)
         }
     }
 }
