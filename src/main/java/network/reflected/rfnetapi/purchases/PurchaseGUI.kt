@@ -2,6 +2,8 @@ package network.reflected.rfnetapi.purchases
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import network.reflected.rfnetapi.async.async
 import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -9,7 +11,6 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 import java.util.*
 
@@ -19,27 +20,35 @@ object PurchaseGUI : Listener {
 
     fun confirm(player: Player, success: () -> Unit, reason: String) {
         try {
-            if (successCallbacks.containsKey(player.uniqueId)) return
+            successCallbacks.remove(player.uniqueId)
 
-            val inv = Bukkit.createInventory(null, InventoryType.HOPPER, title)
+            val inv = Bukkit.createInventory(player, 9, title)
 
             val cancel = ItemStack(Material.RED_WOOL)
             cancel.editMeta {
-                it.displayName(Component.text("Cancel Purchase").color(NamedTextColor.RED))
+                it.displayName(
+                    Component.text("Cancel Purchase")
+                        .color(NamedTextColor.RED)
+                        .decoration(TextDecoration.ITALIC, false)
+                )
             }
-            inv.setItem(1, cancel)
+            inv.setItem(3, cancel)
 
             val lineItem = ItemStack(Material.PAPER)
             lineItem.editMeta {
                 it.displayName(Component.text(reason))
             }
-            inv.setItem(2, lineItem)
+            inv.setItem(4, lineItem)
 
             val confirm = ItemStack(Material.LIME_WOOL)
             confirm.editMeta {
-                it.displayName(Component.text("Confirm Purchase").color(NamedTextColor.GREEN))
+                it.displayName(
+                    Component.text("Confirm Purchase")
+                        .color(NamedTextColor.GREEN)
+                        .decoration(TextDecoration.ITALIC, false)
+                )
             }
-            inv.setItem(3, confirm)
+            inv.setItem(5, confirm)
 
             player.openInventory(inv)
 
@@ -57,8 +66,17 @@ object PurchaseGUI : Listener {
                 when (event.currentItem?.type) {
                     Material.LIME_WOOL -> {
                         val uuid = event.whoClicked.uniqueId
-                        successCallbacks[uuid]?.invoke()
-                        successCallbacks.remove(uuid)
+                        val player = Bukkit.getPlayer(uuid)
+                        val callback = successCallbacks[uuid]
+
+                        if (player != null && callback != null) {
+                            async {
+                                callback.invoke()
+                            }
+                            successCallbacks.remove(uuid)
+                        }
+
+                        event.view.close()
                     }
                     Material.RED_WOOL -> {
                         event.view.close()

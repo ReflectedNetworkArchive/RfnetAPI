@@ -38,109 +38,134 @@ class RfnetAPI : JavaPlugin(), Listener {
     var minigameWorld = false
 
     override fun onEnable() {
-        // Init the API and let any waiting plugins know that it's ready now.
-        api = ReflectedAPI(this)
+        try {
+            // Init the API and let any waiting plugins know that it's ready now.
+            api = ReflectedAPI(this)
 
-        // If something is wrong with the config, shutdown the server, since it won't be connectable.
-        if (!serverConfig.isValid()) {
-            logger.log(Level.SEVERE, serverConfig.whatsMissing())
-            server.shutdown()
-        }
-
-        // Setup a plugin messaging channel
-        server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
-
-        // Register this class as an event listener
-        server.pluginManager.registerEvents(this, this)
-
-        // Register other API's events
-        server.pluginManager.registerEvents(ReflectedAPI.get().commandProvider, this)
-        server.pluginManager.registerEvents(ReflectedAPI.get().purchaseAPI, this)
-
-        server.pluginManager.registerEvents(PurchaseGUI, this)
-        server.pluginManager.registerEvents(PurchaseEvents, this)
-        server.pluginManager.registerEvents(ExceptionDispensary, this)
-
-        // Setup default commands, available on every server
-        DefaultCommands.initialize()
-
-        // Some stuff should be run AFTER the server has fully loaded.
-        server.scheduler.runTaskLater(this, Runnable {
-
-            // Load the worlds as defined in the config
-            // Start by setting up the SWM plugin
-            logger.info("Getting SWM plugin.")
-            try {
-                if (Bukkit.getPluginManager().getPlugin("SlimeWorldManager") == null) {
-                    throw NoClassDefFoundError()
-                }
-                val slime = SWMPlugin.getInstance()
-                if (slime != null) { // If slime plugin can't be found, we're not on a minigame server.
-                    logger.info("Configuring worlds...")
-                    val slimeMongoLoader = slime.getLoader("mongodb")
-
-                    // Now set some properties of the world
-                    val mapProperties = SlimePropertyMap()
-                    mapProperties.setValue(SlimeProperties.DIFFICULTY, "normal")
-                    mapProperties.setValue(SlimeProperties.SPAWN_X, 0)
-                    mapProperties.setValue(SlimeProperties.SPAWN_Y, 64)
-                    mapProperties.setValue(SlimeProperties.SPAWN_Z, 0)
-                    mapProperties.setValue(SlimeProperties.WORLD_TYPE, "FLAT") // removes void effect at lower y levels
-
-                    // And finally, find out which world to load.
-                    logger.info("Looking for worlds to load.")
-                    try {
-                        val loadedMap: SlimeWorld = if (serverConfig.maps.size == 1) { // There is only one map to choose
-                            // Also that magic boolean before mapProperties is whether it's read only. No slime worlds we load
-                            // would be good to make editable (they are all minigame maps)
-                            slime.loadWorld(slimeMongoLoader, serverConfig.maps[0], true, mapProperties)
-                        } else { // A map must be chosen at random.
-                            val maps = serverConfig.maps
-                            val rand = Random()
-                            // See above for what the magic boolean is
-                            slime.loadWorld(slimeMongoLoader, maps[rand.nextInt(maps.size)], true, mapProperties)
-                        }
-                        logger.info("Loading " + loadedMap.name)
-                        slime.generateWorld(loadedMap)
-                        minigameWorld = true
-                    } catch (e: Exception) {
-                        // If the map fails to load, there's nothing to connect to, so stop the server.
-                        ExceptionDispensary.report(e, "loading map")
-                        logger.log(Level.SEVERE, "Error loading a map! The server has to shut down!")
-                        server.shutdown()
-                    }
-                }
-            } catch (e: NoClassDefFoundError) {
-                logger.info("An error occured when attempting to load SWM, so minigame world support has been disabled.")
+            // If something is wrong with the config, shutdown the server, since it won't be connectable.
+            if (!serverConfig.isValid()) {
+                logger.log(Level.SEVERE, serverConfig.whatsMissing())
+                server.shutdown()
             }
 
-            // Add this server's information to Redis for ServerDiscovery.
-            database.setAvailable(true)
-        }, 1) // 1 tick, so waits until the server is fully started (started ticking)
+            // Setup a plugin messaging channel
+            server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
 
-        // Stats
-        val metrics = Metrics(this, 12072)
-        server.scheduler.runTaskTimerAsynchronously(this, Runnable {
-            metrics.addCustomChart(MultiLineChart("mspt") {
-                mapOf(
-                    Pair(
-                        serverConfig.id,
-                        server.averageTickTime.roundToInt()
+            // Register this class as an event listener
+            server.pluginManager.registerEvents(this, this)
+
+            // Register other API's events
+            server.pluginManager.registerEvents(ReflectedAPI.get().commandProvider, this)
+            server.pluginManager.registerEvents(ReflectedAPI.get().purchaseAPI, this)
+
+            server.pluginManager.registerEvents(PurchaseGUI, this)
+            server.pluginManager.registerEvents(PurchaseEvents, this)
+            server.pluginManager.registerEvents(ExceptionDispensary, this)
+
+            // Check online receipts on occasion. Runs async so it isn't *too* expensive
+            // Well, the possible performance drop is worth convenience for buyers
+            server.scheduler.runTaskTimerAsynchronously(this, Runnable {
+                for (player in server.onlinePlayers) {
+                    PurchaseEvents.checkReceipts(player)
+                }
+            }, 400, 400)
+
+            // Setup default commands, available on every server
+            DefaultCommands.initialize()
+
+            // Some stuff should be run AFTER the server has fully loaded.
+            server.scheduler.runTaskLater(this, Runnable {
+
+                // Load the worlds as defined in the config
+                // Start by setting up the SWM plugin
+                logger.info("Getting SWM plugin.")
+                try {
+                    if (Bukkit.getPluginManager().getPlugin("SlimeWorldManager") == null) {
+                        throw NoClassDefFoundError()
+                    }
+                    val slime = SWMPlugin.getInstance()
+                    if (slime != null) { // If slime plugin can't be found, we're not on a minigame server.
+                        logger.info("Configuring worlds...")
+                        val slimeMongoLoader = slime.getLoader("mongodb")
+
+                        // Now set some properties of the world
+                        val mapProperties = SlimePropertyMap()
+                        mapProperties.setValue(SlimeProperties.DIFFICULTY, "normal")
+                        mapProperties.setValue(SlimeProperties.SPAWN_X, 0)
+                        mapProperties.setValue(SlimeProperties.SPAWN_Y, 64)
+                        mapProperties.setValue(SlimeProperties.SPAWN_Z, 0)
+                        mapProperties.setValue(
+                            SlimeProperties.WORLD_TYPE,
+                            "FLAT"
+                        ) // removes void effect at lower y levels
+
+                        // And finally, find out which world to load.
+                        logger.info("Looking for worlds to load.")
+                        try {
+                            val loadedMap: SlimeWorld =
+                                if (serverConfig.maps.size == 1) { // There is only one map to choose
+                                    // Also that magic boolean before mapProperties is whether it's read only. No slime worlds we load
+                                    // would be good to make editable (they are all minigame maps)
+                                    slime.loadWorld(slimeMongoLoader, serverConfig.maps[0], true, mapProperties)
+                                } else { // A map must be chosen at random.
+                                    val maps = serverConfig.maps
+                                    val rand = Random()
+                                    // See above for what the magic boolean is
+                                    slime.loadWorld(
+                                        slimeMongoLoader,
+                                        maps[rand.nextInt(maps.size)],
+                                        true,
+                                        mapProperties
+                                    )
+                                }
+                            logger.info("Loading " + loadedMap.name)
+                            slime.generateWorld(loadedMap)
+                            minigameWorld = true
+                        } catch (e: Exception) {
+                            // If the map fails to load, there's nothing to connect to, so stop the server.
+                            ExceptionDispensary.report(e, "loading map")
+                            logger.log(Level.SEVERE, "Error loading a map! The server has to shut down!")
+                            server.shutdown()
+                        }
+                    }
+                } catch (e: NoClassDefFoundError) {
+                    logger.info("An error occured when attempting to load SWM, so minigame world support has been disabled.")
+                }
+
+                // Add this server's information to Redis for ServerDiscovery.
+                database.setAvailable(true)
+            }, 1) // 1 tick, so waits until the server is fully started (started ticking)
+
+            // Stats
+            val metrics = Metrics(this, 12072)
+            server.scheduler.runTaskTimerAsynchronously(this, Runnable {
+                metrics.addCustomChart(MultiLineChart("mspt") {
+                    mapOf(
+                        Pair(
+                            serverConfig.id,
+                            server.averageTickTime.roundToInt()
+                        )
                     )
-                )
-            })
-        }, 20, 20)
+                })
+            }, 20, 20)
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "enabling plugin")
+        }
     }
 
     override fun onDisable() {
-        database.updatePlayerCount(0)
-        if (!disabledForUpdate) {
-            updateCheck()
-            genericDisable()
+        try {
+            database.updatePlayerCount(0)
+            if (!disabledForUpdate) {
+                updateCheck()
+                closeDatabase()
+            }
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "disabling plugin")
         }
     }
 
-    fun genericDisable() {
+    private fun closeDatabase() {
         // Remove this server from the list of ones that are connectable
         database.setAvailable(false)
         // And then close the connections to the database
@@ -150,53 +175,73 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     // Sends a plugin message to ServerDiscovery running on bungee.
     fun sendPlayer(player: Player, archetype: String) {
-        val out = ByteStreams.newDataOutput()
+        try {
+            val out = ByteStreams.newDataOutput()
 
-        // See the spec for this in ServerDiscovery
-        out.writeUTF("send:" + player.uniqueId + ":" + archetype)
-        player.sendPluginMessage(this, "BungeeCord", out.toByteArray())
+            // See the spec for this in ServerDiscovery
+            out.writeUTF("send:" + player.uniqueId + ":" + archetype)
+            player.sendPluginMessage(this, "BungeeCord", out.toByteArray())
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "sending player")
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     private fun playerJoin(event: PlayerJoinEvent) {
-        if (minigameWorld) {
-            val location = event.player.location
-            location.world = Bukkit.getWorld(loadedMap.name)
-            event.player.teleport(location)
+        try {
+            if (minigameWorld) {
+                val location = event.player.location
+                location.world = Bukkit.getWorld(loadedMap.name)
+                event.player.teleport(location)
+            }
+            database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "player join")
         }
-        database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
     }
 
     @EventHandler
     private fun playerQuit(event: PlayerQuitEvent) {
-        database.updatePlayerCount(Bukkit.getOnlinePlayers().size - 1)
+        try {
+            database.updatePlayerCount(Bukkit.getOnlinePlayers().size - 1)
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "player quit")
+        }
     }
 
     fun restart() {
-        disabledForUpdate = true
-        genericDisable()
+        try {
+            disabledForUpdate = true
+            closeDatabase()
 
-        // Send everybody to another server
-        for (player in Bukkit.getOnlinePlayers()) {
-            sendPlayer(player, serverConfig.archetype)
-        }
-        updateCheck()
+            // Send everybody to another server
+            for (player in Bukkit.getOnlinePlayers()) {
+                sendPlayer(player, serverConfig.archetype)
+            }
+            updateCheck()
 
-        // Wait one second so players don't get Server Closed before being sent back to lobby
-        Bukkit.getScheduler().runTaskLater(this, Runnable {
-            val runtime = Runtime.getRuntime()
-            runtime.addShutdownHook(Thread {
-                val processBuilder = ProcessBuilder("nohup", "sh", "restart.sh")
+            // Wait one second so players don't get Server Closed before being sent back to lobby
+            Bukkit.getScheduler().runTaskLater(this, Runnable {
                 try {
-                    processBuilder.directory(File("."))
-                    processBuilder.redirectErrorStream(false)
-                    processBuilder.start()
-                } catch (e: IOException) {
-                    ExceptionDispensary.report(e, "restarting")
+                    val runtime = Runtime.getRuntime()
+                    runtime.addShutdownHook(Thread {
+                        val processBuilder = ProcessBuilder("nohup", "sh", "restart.sh")
+                        try {
+                            processBuilder.directory(File("."))
+                            processBuilder.redirectErrorStream(false)
+                            processBuilder.start()
+                        } catch (e: IOException) {
+                            ExceptionDispensary.report(e, "restarting")
+                        }
+                    })
+                    Bukkit.shutdown()
+                } catch (e: Exception) {
+                    ExceptionDispensary.report(e, "shutting down for restart")
                 }
-            })
-            Bukkit.shutdown()
-        }, 20)
+            }, 20)
+        } catch (e: Exception) {
+            ExceptionDispensary.report(e, "restarting")
+        }
     }
 
     private fun updateCheck() {
@@ -225,6 +270,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                 download.delete()
             } catch (e: Exception) {
                 ExceptionDispensary.report(e, "updating")
+                e.printStackTrace()
                 println("Update failed! See error above!")
             }
         } catch (e: Exception) {

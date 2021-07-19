@@ -30,7 +30,6 @@ object DefaultCommands {
 
     fun initialize() {
         get().commandProvider.registerCommand({ executor: CommandSender, arguments: CommandArguments ->
-            println(arguments.getString(0))
             if (availableGames.contains(arguments.getString(0))) {
                 if (executor is Player) {
                     if (arguments.getString(0) == "dev") {

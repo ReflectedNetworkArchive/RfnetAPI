@@ -6,6 +6,7 @@ import com.mongodb.client.model.Updates.set
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import network.reflected.rfnetapi.ReflectedAPI.Companion.get
+import network.reflected.rfnetapi.async.async
 import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import org.bson.Document
 import org.bukkit.Bukkit
@@ -47,8 +48,12 @@ class PurchaseAPI : Listener {
                     return
                 } else {
                     PurchaseGUI.confirm(player, {
-                        givePlayerItem(player, item)
-                        addShards(player, -product.price)
+                        try {
+                            givePlayerItem(player, item, friendlyName)
+                            addShards(player, -product.price)
+                        } catch (e: Exception) {
+                            ExceptionDispensary.reportAndNotify(e, "vending item", player)
+                        }
                     }, "Purchase $friendlyName")
                 }
             } else {
@@ -101,7 +106,6 @@ class PurchaseAPI : Listener {
         }
     }
 
-    @Throws(RuntimeException::class)
     fun createProduct(product: Product) {
         try {
             val products = get().database.getCollection("purchases", "products")
@@ -144,18 +148,18 @@ class PurchaseAPI : Listener {
     }
 
     fun howManyProductOwns(player: Player, item: String): Int {
-        try {
+        return try {
             val purchases = get().database.getCollection("purchases", "purchases")
             val purchaseFilter = and(eq("uuid", player.uniqueId.toString()), exists(item))
 
-            return purchases.find(purchaseFilter).first()?.getInteger(item) ?: 0
+            purchases.find(purchaseFilter).first()?.getInteger(item) ?: 0
         } catch (e: Exception) {
             ExceptionDispensary.reportAndNotify(e, "retrieving product ownership count", player)
-            return 0
+            0
         }
     }
 
-    fun givePlayerItem(player: Player, item: String) {
+    fun givePlayerItem(player: Player, item: String, niceName: String) {
         try {
             val product = getProduct(item)
             if (product == null) {
@@ -196,15 +200,18 @@ class PurchaseAPI : Listener {
                 }
                 purchaseHistory.add("${player.name} purchased '$item' on ${Date()}")
                 purchases.updateOne(purchaseFilter, set("history", purchaseHistory))
-                purchases.updateOne(purchaseFilter, set("needsToSee", true))
+//                purchases.updateOne(purchaseFilter, set("needsToSee", true))
 
-                val event = PurchaseSuccessEvent(
+                val event = AsyncPurchaseSuccessEvent(
                     JProduct(
                         product.price,
                         product.name,
-                        product.oneTimePurchase
-                    ), player)
-                Bukkit.getPluginManager().callEvent(event)
+                        product.oneTimePurchase,
+                        niceName
+                    ),
+                    player
+                )
+                async { Bukkit.getPluginManager().callEvent(event) }
             }
         } catch (e: Exception) {
             ExceptionDispensary.reportAndNotify(e, "dispensing item", player)
