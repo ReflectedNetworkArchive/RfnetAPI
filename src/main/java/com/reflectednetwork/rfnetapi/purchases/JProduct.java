@@ -1,4 +1,4 @@
-package network.reflected.rfnetapi.purchases;
+package com.reflectednetwork.rfnetapi.purchases;
 
 public class JProduct {
     private final int price;

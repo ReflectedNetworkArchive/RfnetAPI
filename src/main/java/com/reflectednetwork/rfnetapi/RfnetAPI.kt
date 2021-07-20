@@ -1,14 +1,14 @@
-package network.reflected.rfnetapi
+package com.reflectednetwork.rfnetapi
 
 import com.google.common.io.ByteStreams
 import com.grinderwolf.swm.api.world.SlimeWorld
 import com.grinderwolf.swm.api.world.properties.SlimeProperties
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap
 import com.grinderwolf.swm.plugin.SWMPlugin
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
-import network.reflected.rfnetapi.medallions.MedallionAPI
-import network.reflected.rfnetapi.purchases.PurchaseEvents
-import network.reflected.rfnetapi.purchases.PurchaseGUI
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
+import com.reflectednetwork.rfnetapi.purchases.PurchaseEvents
+import com.reflectednetwork.rfnetapi.purchases.PurchaseGUI
 import org.apache.commons.io.IOUtils
 import org.bstats.bukkit.Metrics
 import org.bstats.charts.MultiLineChart
@@ -30,7 +30,7 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    val ver = 22 // The current version
+    val ver = 23 // The current version
     private var disabledForUpdate = false
 
     var api: ReflectedAPI? = null

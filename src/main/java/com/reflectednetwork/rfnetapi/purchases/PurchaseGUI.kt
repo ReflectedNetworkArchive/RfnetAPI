@@ -1,10 +1,10 @@
-package network.reflected.rfnetapi.purchases
+package com.reflectednetwork.rfnetapi.purchases
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
-import network.reflected.rfnetapi.async.async
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.async.async
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player

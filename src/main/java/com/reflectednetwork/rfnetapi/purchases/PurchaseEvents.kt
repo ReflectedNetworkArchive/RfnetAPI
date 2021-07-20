@@ -1,4 +1,4 @@
-package network.reflected.rfnetapi.purchases
+package com.reflectednetwork.rfnetapi.purchases
 
 import com.mongodb.client.model.Filters.and
 import com.mongodb.client.model.Filters.eq
@@ -7,10 +7,10 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
-import network.reflected.rfnetapi.ReflectedAPI
-import network.reflected.rfnetapi.async.async
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
-import network.reflected.rfnetapi.medallions.MedallionAPI
+import com.reflectednetwork.rfnetapi.ReflectedAPI
+import com.reflectednetwork.rfnetapi.async.async
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener

@@ -1,19 +1,18 @@
-package network.reflected.rfnetapi.bugs
+package com.reflectednetwork.rfnetapi.bugs
 
 import com.mongodb.client.model.Filters.eq
+import com.reflectednetwork.rfnetapi.ReflectedAPI
+import com.reflectednetwork.rfnetapi.async.async
 import net.kyori.adventure.audience.Audience
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
-import network.reflected.rfnetapi.ReflectedAPI
-import network.reflected.rfnetapi.async.async
 import org.bson.Document
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import java.security.SecureRandom
-import java.util.*
 
 object ExceptionDispensary : Listener {
     private val random = SecureRandom()
@@ -22,7 +21,7 @@ object ExceptionDispensary : Listener {
      * Report an exception to the exception store.
      *
      * @param exception The exception to report
-     * @param occurrenceLocation A small string indicating where the exception was caught.
+     * @param whilst A small string indicating where the exception was caught.
      * @return The ID of the exception
      */
     fun report(exception: Exception, whilst: String): String {

@@ -1,8 +1,8 @@
-package network.reflected.rfnetapi.databasetools
+package com.reflectednetwork.rfnetapi.databasetools
 
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.model.Filters
-import network.reflected.rfnetapi.getReflectedAPI
+import com.reflectednetwork.rfnetapi.getReflectedAPI
 import org.bson.Document
 import org.bson.conversions.Bson
 

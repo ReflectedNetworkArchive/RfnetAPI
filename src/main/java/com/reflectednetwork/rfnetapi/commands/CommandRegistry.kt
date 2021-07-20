@@ -1,10 +1,10 @@
-package network.reflected.rfnetapi.commands
+package com.reflectednetwork.rfnetapi.commands
 
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.event.EventHandler

@@ -1,4 +1,4 @@
-package network.reflected.rfnetapi.commands
+package com.reflectednetwork.rfnetapi.commands
 
 import org.bukkit.command.CommandSender
 

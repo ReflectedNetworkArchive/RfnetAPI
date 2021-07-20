@@ -1,6 +1,6 @@
-package network.reflected.rfnetapi.async
+package com.reflectednetwork.rfnetapi.async
 
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 
 fun <T> async(function: () -> T) : AsyncReturnable<T> {

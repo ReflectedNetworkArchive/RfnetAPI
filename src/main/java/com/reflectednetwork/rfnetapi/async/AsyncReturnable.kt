@@ -1,4 +1,4 @@
-package network.reflected.rfnetapi.async
+package com.reflectednetwork.rfnetapi.async
 
 class AsyncReturnable<T> {
     private lateinit var callback: (it: T) -> Unit
