@@ -155,22 +155,18 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onDisable() {
         try {
-            database.updatePlayerCount(0)
             if (!disabledForUpdate) {
                 updateCheck()
-                closeDatabase()
+                // Remove this server from the list of ones that are connectable
+                database.setAvailable(false)
+                database.updatePlayerCount(0)
+                // And then close the connections to the database
+                // so we don't overload them.
+                database.close()
             }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "disabling plugin")
         }
-    }
-
-    private fun closeDatabase() {
-        // Remove this server from the list of ones that are connectable
-        database.setAvailable(false)
-        // And then close the connections to the database
-        // so we don't overload them.
-        database.close()
     }
 
     // Sends a plugin message to ServerDiscovery running on bungee.
@@ -214,13 +210,20 @@ class RfnetAPI : JavaPlugin(), Listener {
     fun restart() {
         try {
             disabledForUpdate = true
-            closeDatabase()
+
+            // Remove this server from the list of ones that are connectable
+            database.setAvailable(false)
+            database.updatePlayerCount(0)
 
             // Send everybody to another server
             for (player in Bukkit.getOnlinePlayers()) {
                 sendPlayer(player, serverConfig.archetype)
             }
             updateCheck()
+
+            // And then close the connections to the database
+            // so we don't overload them.
+            database.close()
 
             // Wait one second so players don't get Server Closed before being sent back to lobby
             Bukkit.getScheduler().runTaskLater(this, Runnable {
