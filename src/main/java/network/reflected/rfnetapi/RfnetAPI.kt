@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
@@ -272,6 +273,9 @@ class RfnetAPI : JavaPlugin(), Listener {
                 println("Update complete!")
             } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
                 if (e.message?.contains("404") != true) throw e
+                println("No update found!")
+                download.delete()
+            } catch (e: FileNotFoundException) {
                 println("No update found!")
                 download.delete()
             }
