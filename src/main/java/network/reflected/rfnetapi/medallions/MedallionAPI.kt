@@ -23,12 +23,17 @@ object MedallionAPI : Listener {
 
             statsCollection.updateOneOrCreate(
                 eq("uuid", player.uniqueId.toString()),
-                combine(min(statistic, 1), inc(statistic, 1))
+                min(statistic, 0)
             ) {
                 Document()
                     .append("uuid", player.uniqueId.toString())
                     .append(statistic, 1)
             }
+
+            statsCollection.updateOne(
+                eq("uuid", player.uniqueId.toString()),
+                inc(statistic, 1)
+            )
 
             async {
                 statsCollection.find(eq("uuid", player.uniqueId.toString())).first()?.getInteger(statistic) ?: 0
