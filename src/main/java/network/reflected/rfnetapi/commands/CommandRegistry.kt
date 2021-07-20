@@ -14,7 +14,7 @@ import org.bukkit.event.server.ServerCommandEvent
 
 class CommandRegistry : Listener {
     var commands: MutableMap<String, Command> = HashMap()
-    fun registerCommand(command: (executor: CommandSender, arguments: CommandArguments) -> Unit, permission: String?, numberOfArgs: Int, name: String) {
+    fun registerCommand(command: (executor: CommandSender, arguments: CommandArguments) -> Unit, permission: String, numberOfArgs: Int, name: String) {
         if (!commands.containsKey(name)) {
             if (!Bukkit.getCommandMap().knownCommands.containsKey(name)) {
                 Bukkit.getCommandMap().register("reflected", EmptyCommand(name))
@@ -25,7 +25,7 @@ class CommandRegistry : Listener {
         }
     }
 
-    fun registerCommands(command: (executor: CommandSender, arguments: CommandArguments) -> Unit, permission: String?, numberOfArgs: Int, vararg names: String) {
+    fun registerCommands(command: (executor: CommandSender, arguments: CommandArguments) -> Unit, permission: String, numberOfArgs: Int, vararg names: String) {
         for (name in names) {
             registerCommand(command, permission, numberOfArgs, name)
         }

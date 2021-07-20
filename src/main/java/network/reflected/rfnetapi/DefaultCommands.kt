@@ -148,18 +148,19 @@ object DefaultCommands {
             }, "rfnet.developer", 1, "excclear"
         )
 
-        getReflectedAPI().commandProvider.registerCommand({ executor, _ ->
-            executor.sendMessage(
-                Component.text("☞ ")
-                    .color(NamedTextColor.GRAY)
-                    .append(
-                        Component.text("Server running Reflected API v${getReflectedAPI().getVersion()}")
-                            .color(NamedTextColor.GREEN)
-                    )
-            )
+        getReflectedAPI().commandProvider.registerCommands({ executor, _ ->
+                executor.sendMessage(
+                    Component.text("☞ ")
+                        .color(NamedTextColor.GRAY)
+                        .append(
+                            Component.text("Server running Reflected API v${getReflectedAPI().getVersion()}")
+                                .color(NamedTextColor.GREEN)
+                        )
+                )
             },
             0,
-            "version"
+            "version",
+            "ver"
         )
     }
 
