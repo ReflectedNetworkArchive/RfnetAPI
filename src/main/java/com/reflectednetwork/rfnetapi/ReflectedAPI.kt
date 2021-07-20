@@ -6,7 +6,6 @@ import com.reflectednetwork.rfnetapi.purchases.PurchaseAPI
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
-import org.bukkit.plugin.IllegalPluginAccessException
 
 class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
     val purchaseAPI = PurchaseAPI()
@@ -58,21 +57,5 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
         fun get(): ReflectedAPI {
             return getReflectedAPI()
         }
-    }
-}
-
-/**
- * Returns an instance of the API
- * May be null if called before this plugin loads,
- * so depend on this plugin in your plugin.yml.
- * @see ReflectedAPI.get
- * @return An instance of this class
- */
-fun getReflectedAPI(): ReflectedAPI {
-    val plugin = Bukkit.getPluginManager().getPlugin("RfnetAPI")
-    if (plugin is RfnetAPI && plugin.api != null) {
-        return plugin.api!!
-    } else {
-        throw IllegalPluginAccessException("Plugin must depend on RfnetAPI to use ReflectedAPI.get()")
     }
 }
