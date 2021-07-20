@@ -1,15 +1,15 @@
-package network.reflected.rfnetapi.medallions
+package com.reflectednetwork.rfnetapi.medallions
 
 import com.mongodb.client.model.Filters.eq
 import com.mongodb.client.model.Updates.*
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
-import network.reflected.rfnetapi.async.async
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
-import network.reflected.rfnetapi.databasetools.findOneOrCreate
-import network.reflected.rfnetapi.databasetools.getCollection
-import network.reflected.rfnetapi.databasetools.updateOneOrCreate
+import com.reflectednetwork.rfnetapi.async.async
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.databasetools.findOneOrCreate
+import com.reflectednetwork.rfnetapi.databasetools.getCollection
+import com.reflectednetwork.rfnetapi.databasetools.updateOneOrCreate
 import org.bson.Document
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler

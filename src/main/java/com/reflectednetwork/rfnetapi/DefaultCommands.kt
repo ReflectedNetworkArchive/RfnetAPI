@@ -1,4 +1,4 @@
-package network.reflected.rfnetapi
+package com.reflectednetwork.rfnetapi
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -9,10 +9,10 @@ import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
-import network.reflected.rfnetapi.async.async
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
-import network.reflected.rfnetapi.commands.CommandArguments
-import network.reflected.rfnetapi.medallions.MedallionAPI
+import com.reflectednetwork.rfnetapi.async.async
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.commands.CommandArguments
+import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.io.BufferedReader

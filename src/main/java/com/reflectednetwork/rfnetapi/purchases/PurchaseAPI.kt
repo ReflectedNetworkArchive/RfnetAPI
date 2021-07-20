@@ -1,13 +1,13 @@
-package network.reflected.rfnetapi.purchases
+package com.reflectednetwork.rfnetapi.purchases
 
 import com.mongodb.client.model.Filters.*
 import com.mongodb.client.model.Updates.inc
 import com.mongodb.client.model.Updates.set
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import network.reflected.rfnetapi.ReflectedAPI.Companion.get
-import network.reflected.rfnetapi.async.async
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.ReflectedAPI.Companion.get
+import com.reflectednetwork.rfnetapi.async.async
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import org.bson.Document
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player

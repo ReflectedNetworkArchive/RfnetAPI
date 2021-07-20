@@ -4,10 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>network.reflected</groupId>
+    <groupId>com.reflectednetwok</groupId>
     <artifactId>RfnetAPI</artifactId>
     <!-- If you're updating below, update int ver in RfnetAPI.kt -->
-    <version>22</version>
+    <version>23</version>
     <packaging>jar</packaging>
 
     <name>RfnetAPI</name>
@@ -15,7 +15,7 @@
     <properties>
         <java.version>16</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.5.20</kotlin.version>
+        <kotlin.version>1.5.21</kotlin.version>
     </properties>
 
     <build>
@@ -195,12 +195,6 @@
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
             <version>${kotlin.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains.kotlin</groupId>
-            <artifactId>kotlin-test</artifactId>
-            <version>${kotlin.version}</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.bstats</groupId>

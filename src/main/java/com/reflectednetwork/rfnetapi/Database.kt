@@ -1,4 +1,4 @@
-package network.reflected.rfnetapi
+package com.reflectednetwork.rfnetapi
 
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings

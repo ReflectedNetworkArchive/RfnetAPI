@@ -1,8 +1,8 @@
-package network.reflected.rfnetapi
+package com.reflectednetwork.rfnetapi
 
-import network.reflected.rfnetapi.bugs.ExceptionDispensary
-import network.reflected.rfnetapi.commands.CommandRegistry
-import network.reflected.rfnetapi.purchases.PurchaseAPI
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.commands.CommandRegistry
+import com.reflectednetwork.rfnetapi.purchases.PurchaseAPI
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player

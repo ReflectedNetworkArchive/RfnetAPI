@@ -1,4 +1,4 @@
-package network.reflected.rfnetapi.purchases
+package com.reflectednetwork.rfnetapi.purchases
 
 data class Product (
     val name: String,

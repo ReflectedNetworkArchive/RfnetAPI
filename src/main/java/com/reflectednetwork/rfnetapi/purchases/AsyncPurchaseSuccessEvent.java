@@ -1,5 +1,5 @@
 
-package network.reflected.rfnetapi.purchases;
+package com.reflectednetwork.rfnetapi.purchases;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
