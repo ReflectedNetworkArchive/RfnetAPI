@@ -6,12 +6,12 @@ import org.bukkit.Bukkit
 fun <T> async(function: () -> T) : AsyncReturnable<T> {
     val returnable = AsyncReturnable<T>()
     Bukkit.getScheduler().runTaskLaterAsynchronously(
-        Bukkit.getPluginManager().plugins[0],
+        Bukkit.getPluginManager().getPlugin("RfnetAPI") ?: Bukkit.getPluginManager().plugins[0],
         Runnable {
             try {
                 val result = function.invoke()
                 Bukkit.getScheduler().runTask(
-                    Bukkit.getPluginManager().plugins[0],
+                    Bukkit.getPluginManager().getPlugin("RfnetAPI") ?: Bukkit.getPluginManager().plugins[0],
                     Runnable {
                         try {
                             returnable.setReturn(result)

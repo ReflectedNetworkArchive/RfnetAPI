@@ -20,6 +20,7 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
@@ -28,7 +29,7 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    private val ver = 17 // The current version
+    val ver = 18 // The current version
     private var disabledForUpdate = false
 
     var api: ReflectedAPI? = null
@@ -155,22 +156,18 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onDisable() {
         try {
-            database.updatePlayerCount(0)
             if (!disabledForUpdate) {
                 updateCheck()
-                closeDatabase()
+                // Remove this server from the list of ones that are connectable
+                database.setAvailable(false)
+                database.updatePlayerCount(0)
+                // And then close the connections to the database
+                // so we don't overload them.
+                database.close()
             }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "disabling plugin")
         }
-    }
-
-    private fun closeDatabase() {
-        // Remove this server from the list of ones that are connectable
-        database.setAvailable(false)
-        // And then close the connections to the database
-        // so we don't overload them.
-        database.close()
     }
 
     // Sends a plugin message to ServerDiscovery running on bungee.
@@ -214,13 +211,20 @@ class RfnetAPI : JavaPlugin(), Listener {
     fun restart() {
         try {
             disabledForUpdate = true
-            closeDatabase()
+
+            // Remove this server from the list of ones that are connectable
+            database.setAvailable(false)
+            database.updatePlayerCount(0)
 
             // Send everybody to another server
             for (player in Bukkit.getOnlinePlayers()) {
                 sendPlayer(player, serverConfig.archetype)
             }
             updateCheck()
+
+            // And then close the connections to the database
+            // so we don't overload them.
+            database.close()
 
             // Wait one second so players don't get Server Closed before being sent back to lobby
             Bukkit.getScheduler().runTaskLater(this, Runnable {
@@ -269,6 +273,9 @@ class RfnetAPI : JavaPlugin(), Listener {
                 println("Update complete!")
             } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
                 if (e.message?.contains("404") != true) throw e
+                println("No update found!")
+                download.delete()
+            } catch (e: FileNotFoundException) {
                 println("No update found!")
                 download.delete()
             }
