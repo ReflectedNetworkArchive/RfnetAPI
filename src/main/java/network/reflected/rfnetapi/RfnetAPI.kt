@@ -274,11 +274,11 @@ class RfnetAPI : JavaPlugin(), Listener {
                 IOUtils.copy(urlConnection.getInputStream(), downloadStream)
                 File("./plugins/RfnetAPI-$ver.jar").deleteOnExit()
                 println("Update complete!")
-            } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
-                if (e.message?.contains("404") != true) throw e
+            }  catch (e: FileNotFoundException) {
                 println("No update found!")
                 download.delete()
-            } catch (e: FileNotFoundException) {
+            } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
+                if (e.message?.contains("404") != true) throw e
                 println("No update found!")
                 download.delete()
             }
