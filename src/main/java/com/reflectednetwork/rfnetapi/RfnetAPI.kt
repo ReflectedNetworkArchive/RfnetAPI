@@ -30,7 +30,7 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    val ver = 24 // The current version
+    val ver = 23 // The current version
     private var disabledForUpdate = false
 
     var api: ReflectedAPI? = null
@@ -151,6 +151,8 @@ class RfnetAPI : JavaPlugin(), Listener {
                     )
                 })
             }, 20, 20)
+
+            restart() // TODO: Undo this! This is a fake updater update
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "enabling plugin")
         }
