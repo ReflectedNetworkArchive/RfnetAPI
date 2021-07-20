@@ -119,10 +119,6 @@
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
-        <!--        <repository>-->
-        <!--            <id>rapture-snapshots</id>-->
-        <!--            <url>https://repo.rapture.pw/repository/maven-snapshots/</url>-->
-        <!--        </repository>-->
         <repository>
             <id>opencollab-snapshot</id>
             <url>https://repo.opencollab.dev/maven-snapshots/</url>
