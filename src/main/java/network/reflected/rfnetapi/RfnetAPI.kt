@@ -6,6 +6,7 @@ import com.grinderwolf.swm.api.world.properties.SlimeProperties
 import com.grinderwolf.swm.api.world.properties.SlimePropertyMap
 import com.grinderwolf.swm.plugin.SWMPlugin
 import network.reflected.rfnetapi.bugs.ExceptionDispensary
+import network.reflected.rfnetapi.medallions.MedallionAPI
 import network.reflected.rfnetapi.purchases.PurchaseEvents
 import network.reflected.rfnetapi.purchases.PurchaseGUI
 import org.apache.commons.io.IOUtils
@@ -62,6 +63,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             server.pluginManager.registerEvents(PurchaseGUI, this)
             server.pluginManager.registerEvents(PurchaseEvents, this)
             server.pluginManager.registerEvents(ExceptionDispensary, this)
+            server.pluginManager.registerEvents(MedallionAPI, this)
 
             // Check online receipts on occasion. Runs async so it isn't *too* expensive
             // Well, the possible performance drop is worth convenience for buyers
@@ -193,6 +195,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                     event.player.teleport(location)
                 }
             }
+
             database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "player join")
