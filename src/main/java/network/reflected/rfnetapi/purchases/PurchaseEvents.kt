@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.TextDecoration
 import network.reflected.rfnetapi.ReflectedAPI
 import network.reflected.rfnetapi.async.async
 import network.reflected.rfnetapi.bugs.ExceptionDispensary
+import network.reflected.rfnetapi.medallions.MedallionAPI
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -30,6 +31,8 @@ object PurchaseEvents : Listener {
                         .decoration(TextDecoration.ITALIC, true)
                 )
         )
+
+        MedallionAPI.increaseStat(event.purchaser, "purchase", "In-Game Purchase")
     }
 
     @EventHandler
