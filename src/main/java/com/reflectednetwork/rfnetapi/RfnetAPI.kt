@@ -30,7 +30,7 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    val ver = 23 // The current version
+    val ver = 24 // The current version
     private var disabledForUpdate = false
 
     var api: ReflectedAPI? = null
@@ -268,7 +268,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                 val basicAuthenticationEncoded =
                     Base64.getEncoder().encodeToString("$username:$password".toByteArray(charset("UTF-8")))
                 val url =
-                    URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/network/reflected/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
+                    URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
                 val urlConnection = url.openConnection()
                 urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
                 IOUtils.copy(urlConnection.getInputStream(), downloadStream)
