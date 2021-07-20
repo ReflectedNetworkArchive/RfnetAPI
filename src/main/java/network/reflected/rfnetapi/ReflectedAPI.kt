@@ -20,6 +20,10 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
         }
     }
 
+    fun getVersion(): Int {
+        return plugin.ver
+    }
+
     fun restart() {
         try {
             plugin.restart()

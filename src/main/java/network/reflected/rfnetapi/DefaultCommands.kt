@@ -9,7 +9,6 @@ import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
-import network.reflected.rfnetapi.ReflectedAPI.Companion.get
 import network.reflected.rfnetapi.async.async
 import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import network.reflected.rfnetapi.commands.CommandArguments
@@ -29,19 +28,19 @@ object DefaultCommands {
     )
 
     fun initialize() {
-        get().commandProvider.registerCommand({ executor: CommandSender, arguments: CommandArguments ->
+        getReflectedAPI().commandProvider.registerCommand({ executor: CommandSender, arguments: CommandArguments ->
             if (availableGames.contains(arguments.getString(0))) {
                 if (executor is Player) {
                     if (arguments.getString(0) == "dev") {
                         if (executor.hasPermission("rfnet.developer")) {
-                            get().sendPlayer(executor, "dev")
+                            getReflectedAPI().sendPlayer(executor, "dev")
                         } else {
                             executor.sendMessage(Component.text("That server is protected.").color(NamedTextColor.RED))
                         }
                     } else if (arguments.getString(0) == "survival") {
                         checkVoteAndSendToSurvival(executor)
                     } else {
-                        get().sendPlayer(executor, arguments.getString(0))
+                        getReflectedAPI().sendPlayer(executor, arguments.getString(0))
                     }
                 } else {
                     executor.sendMessage(Component.text("Only players can connect to servers.").color(NamedTextColor.RED))
@@ -51,7 +50,7 @@ object DefaultCommands {
             }
         }, 1, "game")
 
-        get().commandProvider.registerCommand({ executor: CommandSender, _ ->
+        getReflectedAPI().commandProvider.registerCommand({ executor: CommandSender, _ ->
             executor.sendMessage(
                 Component.text("\n").append(
                     Component.text("Click the link below to join our discord!\n")
@@ -69,13 +68,13 @@ object DefaultCommands {
             )
         }, 0, "discord")
 
-        get().commandProvider.registerCommands({ executor: CommandSender, _ ->
+        getReflectedAPI().commandProvider.registerCommands({ executor: CommandSender, _ ->
             if (executor is Player) {
-                get().sendPlayer(executor, "lobby")
+                getReflectedAPI().sendPlayer(executor, "lobby")
             }
         }, 0, "hub", "lobby")
 
-        get().commandProvider.registerCommand({ executor: CommandSender, _ ->
+        getReflectedAPI().commandProvider.registerCommand({ executor: CommandSender, _ ->
             executor.sendMessage(
                 Component.text("\n")
                     .append(Component.text("Command List"))
@@ -119,23 +118,23 @@ object DefaultCommands {
             )
         }, 0, "help")
 
-        get().commandProvider.registerCommand(
-            { _, _ -> get().restart() },
+        getReflectedAPI().commandProvider.registerCommand(
+            { _, _ -> getReflectedAPI().restart() },
             "rfnet.restart",
             0,
             "restart"
         )
 
-        get().commandProvider.registerCommand(
-            { _, _ -> get().restart() },
+        getReflectedAPI().commandProvider.registerCommand(
+            { _, _ -> getReflectedAPI().restart() },
             "rfnet.restart",
             0,
             "fakerestart"
         )
 
-        get().commandProvider.registerCommand(
+        getReflectedAPI().commandProvider.registerCommand(
             { executor, arguments ->
-                val exceptions = get().database.getCollection("bugreps", "exceptions")
+                val exceptions = getReflectedAPI().database.getCollection("bugreps", "exceptions")
                 if (exceptions.deleteMany(Filters.eq("minid", arguments.getString(0))).deletedCount > 0) {
                     executor.sendMessage(
                         Component.text("☞ ")
@@ -147,6 +146,20 @@ object DefaultCommands {
                     )
                 }
             }, "rfnet.developer", 1, "excclear"
+        )
+
+        getReflectedAPI().commandProvider.registerCommand({ executor, _ ->
+            executor.sendMessage(
+                Component.text("☞ ")
+                    .color(NamedTextColor.GRAY)
+                    .append(
+                        Component.text("Server running Reflected API v${getReflectedAPI().getVersion()}")
+                            .color(NamedTextColor.GREEN)
+                    )
+            )
+            },
+            0,
+            "version"
         )
     }
 
@@ -164,7 +177,7 @@ object DefaultCommands {
                 result["voted"].asBoolean
             }.then {
                 if (it) {
-                    get().sendPlayer(player, "survival")
+                    getReflectedAPI().sendPlayer(player, "survival")
                 } else {
                     player.sendMessage(Component.text("You need to vote before joining survival."))
                     player.openInventory.close()
