@@ -12,6 +12,7 @@ import net.kyori.adventure.text.format.TextDecoration
 import network.reflected.rfnetapi.async.async
 import network.reflected.rfnetapi.bugs.ExceptionDispensary
 import network.reflected.rfnetapi.commands.CommandArguments
+import network.reflected.rfnetapi.medallions.MedallionAPI
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.io.BufferedReader
@@ -40,6 +41,9 @@ object DefaultCommands {
                     } else if (arguments.getString(0) == "survival") {
                         checkVoteAndSendToSurvival(executor)
                     } else {
+                        if (arguments.getString(0) == "spleefrun") {
+                            MedallionAPI.giveMedallion(executor, "join_spleefrun", "Play SpleefRun")
+                        }
                         getReflectedAPI().sendPlayer(executor, arguments.getString(0))
                     }
                 } else {
@@ -179,6 +183,7 @@ object DefaultCommands {
             }.then {
                 if (it) {
                     getReflectedAPI().sendPlayer(player, "survival")
+                    MedallionAPI.giveMedallion(player, "join_survivals2", "Survival S2 \"Sad to see it go\"")
                 } else {
                     player.sendMessage(Component.text("You need to vote before joining survival."))
                     player.openInventory.close()
