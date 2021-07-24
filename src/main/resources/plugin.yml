@@ -4,7 +4,7 @@ main: com.reflectednetwork.rfnetapi.RfnetAPI
 load: STARTUP
 softdepend:
   - SlimeWorldManager
-api-version: 1.16
+api-version: 1.17
 libraries:
   - io.lettuce:lettuce-core:6.1.1.RELEASE
   - org.mongodb:mongodb-driver-sync:4.2.3
