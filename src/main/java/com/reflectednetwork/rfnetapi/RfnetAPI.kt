@@ -26,7 +26,7 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    val ver = 24 // The current version
+    val ver = 25 // The current version
     private var disabledForUpdate = false
 
     var api: ReflectedAPI? = null
