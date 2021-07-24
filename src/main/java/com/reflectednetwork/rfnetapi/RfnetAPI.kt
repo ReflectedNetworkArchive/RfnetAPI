@@ -188,17 +188,20 @@ class RfnetAPI : JavaPlugin(), Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     private fun playerJoin(event: PlayerJoinEvent) {
         try {
-            if (minigameWorld) {
-                loadedMap?.let {
-                    val location = event.player.location
-                    location.world = Bukkit.getWorld(it.name)
-                    event.player.teleport(location)
-                }
-            }
-
             database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
+            tryMapTP(event.player)
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "player join")
+        }
+    }
+
+    private fun tryMapTP(player: Player) {
+        if (minigameWorld) {
+            loadedMap?.let {
+                val location = player.location
+                location.world = Bukkit.getWorld(it.name)
+                player.teleport(location)
+            }
         }
     }
 
