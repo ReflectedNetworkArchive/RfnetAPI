@@ -14,11 +14,7 @@ import org.bstats.bukkit.Metrics
 import org.bstats.charts.MultiLineChart
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 import java.io.FileNotFoundException
@@ -53,9 +49,6 @@ class RfnetAPI : JavaPlugin(), Listener {
             // Setup a plugin messaging channel
             server.messenger.registerOutgoingPluginChannel(this, "BungeeCord")
 
-            // Register this class as an event listener
-            server.pluginManager.registerEvents(this, this)
-
             // Register other API's events
             server.pluginManager.registerEvents(ReflectedAPI.get().commandProvider, this)
             server.pluginManager.registerEvents(ReflectedAPI.get().purchaseAPI, this)
@@ -64,6 +57,8 @@ class RfnetAPI : JavaPlugin(), Listener {
             server.pluginManager.registerEvents(PurchaseEvents, this)
             server.pluginManager.registerEvents(ExceptionDispensary, this)
             server.pluginManager.registerEvents(MedallionAPI, this)
+            server.pluginManager.registerEvents(JoinEventWorkaround, this)
+            server.pluginManager.registerEvents(PlayerCountEvents, this)
 
             // Check online receipts on occasion. Runs async so it isn't *too* expensive
             // Well, the possible performance drop is worth convenience for buyers
@@ -182,35 +177,6 @@ class RfnetAPI : JavaPlugin(), Listener {
             player.sendPluginMessage(this, "BungeeCord", out.toByteArray())
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "sending player")
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    private fun playerJoin(event: PlayerJoinEvent) {
-        try {
-            database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
-            tryMapTP(event.player)
-        } catch (e: Exception) {
-            ExceptionDispensary.report(e, "player join")
-        }
-    }
-
-    private fun tryMapTP(player: Player) {
-        if (minigameWorld) {
-            loadedMap?.let {
-                val location = player.location
-                location.world = Bukkit.getWorld(it.name)
-                player.teleport(location)
-            }
-        }
-    }
-
-    @EventHandler
-    private fun playerQuit(event: PlayerQuitEvent) {
-        try {
-            database.updatePlayerCount(Bukkit.getOnlinePlayers().size - 1)
-        } catch (e: Exception) {
-            ExceptionDispensary.report(e, "player quit")
         }
     }
 

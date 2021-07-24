@@ -42,6 +42,10 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
         }
     }
 
+    fun isMinigameWorld(): Boolean {
+        return plugin.minigameWorld
+    }
+
     fun getLoadedMap(): World {
         try {
             return plugin.loadedMap?.let {
