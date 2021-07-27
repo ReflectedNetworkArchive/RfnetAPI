@@ -7,7 +7,7 @@
     <groupId>com.reflectednetwork</groupId>
     <artifactId>RfnetAPI</artifactId>
     <!-- If you're updating below, update int ver in RfnetAPI.kt -->
-    <version>26</version>
+    <version>27</version>
     <packaging>jar</packaging>
 
     <name>RfnetAPI</name>
