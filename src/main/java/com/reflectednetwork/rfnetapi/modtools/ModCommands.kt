@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bson.Document
+import org.bson.types.ObjectId
 import org.bukkit.Bukkit
 import java.util.*
 
@@ -129,5 +130,15 @@ object ModCommands {
                     )
             )
         }, "rfnet.ban", 1, "bunsave")
+
+        getReflectedAPI().commandProvider.registerCommand({executor, arguments ->
+            val bans = getReflectedAPI().database.getCollection("punishments", "bans")
+
+            if (bans.findOneAndDelete(eq("_id", ObjectId(arguments.getString(0)))) == null) {
+                executor.sendMessage(Component.text("Ban with that ID not found.").color(NamedTextColor.RED))
+            } else {
+                executor.sendMessage(Component.text("Player unbanned!").color(NamedTextColor.GREEN))
+            }
+        }, "rfnet.ban", 1, "unban")
     }
 }
