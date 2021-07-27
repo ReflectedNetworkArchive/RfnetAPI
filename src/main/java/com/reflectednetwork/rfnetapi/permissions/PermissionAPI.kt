@@ -27,7 +27,8 @@ class PermissionAPI(private val plugin: RfnetAPI) : Listener {
         Pair("moderator", TextColor.color(242, 153, 252)),
         Pair("developer", TextColor.color(93, 156, 252)),
         Pair("builder", TextColor.color(252, 180, 156)),
-        Pair("plus", TextColor.color(184, 242, 70))
+        Pair("plus", TextColor.color(184, 242, 70)),
+        Pair("", NamedTextColor.DARK_GRAY)
     )
 
     private val rankNameMap = mapOf(
