@@ -134,10 +134,14 @@ object ModCommands {
         getReflectedAPI().commandProvider.registerCommand({executor, arguments ->
             val bans = getReflectedAPI().database.getCollection("punishments", "bans")
 
-            if (bans.findOneAndDelete(eq("_id", ObjectId(arguments.getString(0)))) == null) {
-                executor.sendMessage(Component.text("Ban with that ID not found.").color(NamedTextColor.RED))
-            } else {
-                executor.sendMessage(Component.text("Player unbanned!").color(NamedTextColor.GREEN))
+            try {
+                if (bans.findOneAndDelete(eq("_id", ObjectId(arguments.getString(0)))) == null) {
+                    executor.sendMessage(Component.text("Ban with that ID not found.").color(NamedTextColor.RED))
+                } else {
+                    executor.sendMessage(Component.text("Player unbanned!").color(NamedTextColor.GREEN))
+                }
+            } catch (e: IllegalArgumentException) {
+                executor.sendMessage(Component.text("This command expects a ban ID.").color(NamedTextColor.RED))
             }
         }, "rfnet.ban", 1, "unban")
     }
