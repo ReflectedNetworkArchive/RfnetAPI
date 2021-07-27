@@ -46,21 +46,27 @@ object PermissionCommands {
             if (group == null) {
                 executor.sendMessage(Component.text("That group doesn't exist!").color(NamedTextColor.RED))
             } else {
-                if (group.getMutableSet<String>("permissions").contains("rfnet.permissions.edit") && !executor.hasPermission("rfnet.permissions.edit")) {
-                    executor.sendMessage(Component.text("You can't escalate privileges!").color(NamedTextColor.RED))
+                if (!executor.hasPermission("rfnet.permissions.edit") && arguments.getPlayer(0).hasPermission("rfnet.permissions.moderate")) {
+                    executor.sendMessage(Component.text("You can't edit other moderators!").color(NamedTextColor.RED))
                 } else {
-                    val players = getReflectedAPI().database.getCollection("permissions", "players")
-
-                    players.updateOneOrCreate(
-                        eq("uuid", arguments.getPlayer(0).uniqueId.toString()),
-                        set("group", arguments.getString(1))
+                    if (group.getMutableSet<String>("permissions")
+                            .contains("rfnet.permissions.edit") && !executor.hasPermission("rfnet.permissions.edit")
                     ) {
-                        Document()
-                            .append("uuid", arguments.getPlayer(0).uniqueId.toString())
-                            .append("group", arguments.getString(1))
-                    }
+                        executor.sendMessage(Component.text("You can't escalate privileges!").color(NamedTextColor.RED))
+                    } else {
+                        val players = getReflectedAPI().database.getCollection("permissions", "players")
 
-                    executor.sendMessage(Component.text("Group set.").color(NamedTextColor.GREEN))
+                        players.updateOneOrCreate(
+                            eq("uuid", arguments.getPlayer(0).uniqueId.toString()),
+                            set("group", arguments.getString(1))
+                        ) {
+                            Document()
+                                .append("uuid", arguments.getPlayer(0).uniqueId.toString())
+                                .append("group", arguments.getString(1))
+                        }
+
+                        executor.sendMessage(Component.text("Group set.").color(NamedTextColor.GREEN))
+                    }
                 }
             }
         }, "rfnet.permissions.moderate", 2, "setgroup")
@@ -68,10 +74,14 @@ object PermissionCommands {
         getReflectedAPI().commandProvider.registerCommand({ executor, arguments ->
             val players = getReflectedAPI().database.getCollection("permissions", "players")
 
-            if (players.findOneAndDelete(eq("uuid", arguments.getPlayer(0).uniqueId.toString())) != null) {
-                executor.sendMessage(Component.text("Removed group from player.").color(NamedTextColor.GREEN))
+            if (!executor.hasPermission("rfnet.permissions.edit") && arguments.getPlayer(0).hasPermission("rfnet.permissions.moderate")) {
+                executor.sendMessage(Component.text("You can't edit other moderators!").color(NamedTextColor.RED))
             } else {
-                executor.sendMessage(Component.text("Player didn't have a group set.").color(NamedTextColor.RED))
+                if (players.findOneAndDelete(eq("uuid", arguments.getPlayer(0).uniqueId.toString())) != null) {
+                    executor.sendMessage(Component.text("Removed group from player.").color(NamedTextColor.GREEN))
+                } else {
+                    executor.sendMessage(Component.text("Player didn't have a group set.").color(NamedTextColor.RED))
+                }
             }
         }, "rfnet.permissions.moderate", 1, "unsetgroup")
 
