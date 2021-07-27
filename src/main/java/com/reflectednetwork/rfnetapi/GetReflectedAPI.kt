@@ -15,6 +15,6 @@ fun getReflectedAPI(): ReflectedAPI {
     if (plugin is RfnetAPI && plugin.api != null) {
         return plugin.api!!
     } else {
-        throw IllegalPluginAccessException("Plugin must depend on RfnetAPI to use ReflectedAPI.get()")
+        throw IllegalPluginAccessException("Plugin must depend on RfnetAPI to use getReflectedAPI()")
     }
 }

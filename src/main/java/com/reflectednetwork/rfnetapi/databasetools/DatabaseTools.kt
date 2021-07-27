@@ -21,3 +21,12 @@ fun <TDocument> MongoCollection<TDocument>.updateOneOrCreate(filter: Bson, updat
 fun <TDocument> MongoCollection<TDocument>.findOneOrCreate(filter: Bson, create: () -> TDocument): TDocument {
     return find(filter).first() ?: find(Filters.eq("_id", insertOne(create.invoke()).insertedId)).first()!!
 }
+
+fun <T> Document.getMutableSet(key: String): MutableSet<T> {
+    val set = mutableSetOf<T>()
+    val list = this.get(key) as ArrayList<T>
+    for (value in list) {
+        set.add(value)
+    }
+    return set
+}
