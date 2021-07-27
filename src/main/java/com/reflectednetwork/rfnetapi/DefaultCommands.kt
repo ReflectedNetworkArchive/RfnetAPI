@@ -3,16 +3,16 @@ package com.reflectednetwork.rfnetapi
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.mongodb.client.model.Filters
+import com.reflectednetwork.rfnetapi.async.async
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.commands.CommandArguments
+import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import net.kyori.adventure.inventory.Book
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
-import com.reflectednetwork.rfnetapi.async.async
-import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
-import com.reflectednetwork.rfnetapi.commands.CommandArguments
-import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.io.BufferedReader
@@ -25,14 +25,21 @@ object DefaultCommands {
         "spleefrun",
         "survival",
         "squidwars",
-        "dev"
+        "dev",
+        "build"
     )
 
     fun initialize() {
         getReflectedAPI().commandProvider.registerCommand({ executor: CommandSender, arguments: CommandArguments ->
             if (availableGames.contains(arguments.getString(0))) {
                 if (executor is Player) {
-                    if (arguments.getString(0) == "dev") {
+                    if (arguments.getString(0) == "build") {
+                        if (executor.hasPermission("rfnet.build")) {
+                            getReflectedAPI().sendPlayer(executor, "build")
+                        } else {
+                            executor.sendMessage(Component.text("That server is protected.").color(NamedTextColor.RED))
+                        }
+                    } else if (arguments.getString(0) == "dev") {
                         if (executor.hasPermission("rfnet.developer")) {
                             getReflectedAPI().sendPlayer(executor, "dev")
                         } else {
@@ -164,7 +171,8 @@ object DefaultCommands {
             },
             0,
             "version",
-            "ver"
+            "ver",
+            "about"
         )
     }
 
@@ -183,7 +191,7 @@ object DefaultCommands {
             }.then {
                 if (it) {
                     getReflectedAPI().sendPlayer(player, "survival")
-                    MedallionAPI.giveMedallion(player, "join_survivals2", "Survival S2 \"Sad to see it go\"")
+                    MedallionAPI.giveMedallion(player, "join_survivals3", "Join Survival S3")
                 } else {
                     player.sendMessage(Component.text("You need to vote before joining survival."))
                     player.openInventory.close()

@@ -7,6 +7,10 @@ import com.grinderwolf.swm.api.world.properties.SlimePropertyMap
 import com.grinderwolf.swm.plugin.SWMPlugin
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
+import com.reflectednetwork.rfnetapi.modtools.ModCommands
+import com.reflectednetwork.rfnetapi.modtools.ModEvents
+import com.reflectednetwork.rfnetapi.permissions.PermissionAPI
+import com.reflectednetwork.rfnetapi.permissions.PermissionCommands
 import com.reflectednetwork.rfnetapi.purchases.PurchaseEvents
 import com.reflectednetwork.rfnetapi.purchases.PurchaseGUI
 import org.apache.commons.io.IOUtils
@@ -34,11 +38,17 @@ class RfnetAPI : JavaPlugin(), Listener {
     val database = Database(serverConfig)
     var loadedMap: SlimeWorld? = null
     var minigameWorld = false
+    private lateinit var permissionAPI: PermissionAPI
 
     override fun onEnable() {
         try {
             // Init the API and let any waiting plugins know that it's ready now.
             api = ReflectedAPI(this)
+
+            permissionAPI = PermissionAPI(this)
+            PermissionCommands.setupCommands()
+
+            ModCommands.initCommands()
 
             // If something is wrong with the config, shutdown the server, since it won't be connectable.
             if (!serverConfig.isValid()) {
@@ -59,6 +69,8 @@ class RfnetAPI : JavaPlugin(), Listener {
             server.pluginManager.registerEvents(MedallionAPI, this)
             server.pluginManager.registerEvents(JoinEventWorkaround, this)
             server.pluginManager.registerEvents(PlayerCountEvents, this)
+            server.pluginManager.registerEvents(ModEvents, this)
+            server.pluginManager.registerEvents(permissionAPI, this)
 
             // Check online receipts on occasion. Runs async so it isn't *too* expensive
             // Well, the possible performance drop is worth convenience for buyers

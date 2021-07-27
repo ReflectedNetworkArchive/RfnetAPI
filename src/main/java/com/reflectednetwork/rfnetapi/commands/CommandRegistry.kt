@@ -1,10 +1,10 @@
 package com.reflectednetwork.rfnetapi.commands
 
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.format.NamedTextColor
-import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.event.EventHandler
@@ -46,8 +46,8 @@ class CommandRegistry : Listener {
         val command = commands[tokenized[0]] ?: return false
 
         if (command.permission != "" && !commandSender.hasPermission(command.permission!!)) {
-            commandSender.sendMessage(Component.text("That command is registered, but it doesn't do anything yet! Please use /help for working commands.").color(NamedTextColor.RED))
-            return false // If they don't have permission, pretend the command doesn't exist.
+            commandSender.sendMessage(Component.text("That command is protected. Please use /help for public commands.").color(NamedTextColor.RED))
+            return true
         }
 
         if (tokenized.size - 1 != command.argCount) {
@@ -81,8 +81,16 @@ class CommandRegistry : Listener {
 
     @EventHandler
     private fun playerCommand(event: PlayerCommandPreprocessEvent) {
-        if (event.message.startsWith("/")) {
-            event.isCancelled = executeCommand(event.player, event.message.substring(1))
+        event.isCancelled = true
+        if (!executeCommand(event.player, event.message.substring(1))) {
+            if (event.player.hasPermission("rfnet.exposedcommands")) {
+                event.isCancelled = false
+            } else {
+                event.player.sendMessage(
+                    Component.text("That command is protected. Please use /help for public commands.")
+                        .color(NamedTextColor.RED)
+                )
+            }
         }
     }
 
