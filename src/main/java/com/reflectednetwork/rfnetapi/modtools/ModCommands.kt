@@ -101,6 +101,10 @@ object ModCommands {
             executor.sendMessage(Component.text("Player banned!").color(NamedTextColor.GREEN))
         }, "rfnet.ban", 2, "bs3")
 
+        getReflectedAPI().commandProvider.registerCommand({ _, arguments ->
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "bs3 ${arguments.getPlayer(1).uniqueId} \"Anti-Cheat ban: Go to rnwk.xyz/discord if false\"")
+        }, "rfnet.acban", 1, "acban")
+
         getReflectedAPI().commandProvider.registerCommand({executor, arguments ->
             val savedbans = getReflectedAPI().database.getCollection("punishments", "savedbans")
 
