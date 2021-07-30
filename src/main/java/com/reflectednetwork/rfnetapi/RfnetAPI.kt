@@ -39,9 +39,16 @@ class RfnetAPI : JavaPlugin(), Listener {
     var loadedMap: SlimeWorld? = null
     var minigameWorld = false
     private lateinit var permissionAPI: PermissionAPI
+    var ghostMode = false
 
     override fun onEnable() {
         try {
+            if (Bukkit.getWorldContainer().list()?.contains("RFNET_GHOST_MODE") == true) {
+                ghostMode = true
+                GhostModeManager.enable(this)
+                return
+            }
+
             // Init the API and let any waiting plugins know that it's ready now.
             api = ReflectedAPI(this)
 
@@ -165,6 +172,11 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onDisable() {
         try {
+            if (ghostMode) {
+                GhostModeManager.disable(this)
+                return
+            }
+
             if (!disabledForUpdate) {
                 updateCheck()
                 // Remove this server from the list of ones that are connectable
