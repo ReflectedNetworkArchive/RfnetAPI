@@ -290,7 +290,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                 val newProperties = File("server.properties~").outputStream()
 
                 properties.map { it.replace("allow-flight=false", "allow-flight=true") }.forEach { line ->
-                    newProperties.write(line.encodeToByteArray())
+                    newProperties.write("$line\n".encodeToByteArray())
                 }
 
                 val propertiesFile = File("server.properties")
