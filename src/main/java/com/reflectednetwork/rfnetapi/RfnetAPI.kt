@@ -294,6 +294,8 @@ class RfnetAPI : JavaPlugin(), Listener {
                         "network-compression-threshold=256" -> "network-compression-threshold=-1"
                         "view-distance=10" -> "view-distance=5"
                         "allow-nether=true" -> "allow-nether=${serverConfig.archetype == "survival"}"
+                        "online-mode=true" -> "online-mode=false"
+                        "server-port=25565" -> "server-port=${serverConfig.address.split(":").last()}"
                         else -> it
                     }
                 }.forEach { line ->
