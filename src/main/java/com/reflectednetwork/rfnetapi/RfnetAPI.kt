@@ -45,7 +45,7 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onEnable() {
         try {
-            if (!server.allowFlight) {
+            if (!server.allowFlight || server.onlineMode) {
                 Bukkit.getScheduler().runTaskLater(this, Runnable { restart() }, 20)
                 return
             }
