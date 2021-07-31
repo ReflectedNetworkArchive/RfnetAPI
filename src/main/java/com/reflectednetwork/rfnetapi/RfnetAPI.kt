@@ -289,8 +289,13 @@ class RfnetAPI : JavaPlugin(), Listener {
                 val newProperties = File("server.properties~").outputStream()
 
                 properties.map {
-                    it.replace("allow-flight=false", "allow-flight=true")
-                    it.replace("network-compression-threshold=256", "network-compression-threshold=-1")
+                    when (it) {
+                        "allow-flight=false" -> "allow-flight=true"
+                        "network-compression-threshold=256" -> "network-compression-threshold=-1"
+                        "view-distance=10" -> "view-distance=5"
+                        "allow-nether=true" -> "allow-nether=${serverConfig.archetype == "survival"}"
+                        else -> it
+                    }
                 }.forEach { line ->
                     newProperties.write("$line\n".encodeToByteArray())
                 }
