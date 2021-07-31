@@ -282,7 +282,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                 download.delete()
             }
 
-            if (!server.allowFlight) {
+            if (!server.allowFlight || server.onlineMode) {
                 println("Applying configuration updates...")
 
                 val properties = Files.lines(Paths.get("server.properties"))
