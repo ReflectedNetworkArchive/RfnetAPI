@@ -25,12 +25,14 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    val ver = 28 // The current version
+    val ver = 29 // The current version
     private var disabledForUpdate = false
 
     var api: ReflectedAPI? = null
@@ -39,9 +41,21 @@ class RfnetAPI : JavaPlugin(), Listener {
     var loadedMap: SlimeWorld? = null
     var minigameWorld = false
     private lateinit var permissionAPI: PermissionAPI
+    var ghostMode = false
 
     override fun onEnable() {
         try {
+            if (!server.allowFlight) {
+                restart()
+                return
+            }
+
+            if (Bukkit.getWorldContainer().list()?.contains("RFNET_GHOST_MODE") == true) {
+                ghostMode = true
+                GhostModeManager.enable(this)
+                return
+            }
+
             // Init the API and let any waiting plugins know that it's ready now.
             api = ReflectedAPI(this)
 
@@ -165,6 +179,11 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onDisable() {
         try {
+            if (ghostMode) {
+                GhostModeManager.disable(this)
+                return
+            }
+
             if (!disabledForUpdate) {
                 updateCheck()
                 // Remove this server from the list of ones that are connectable
@@ -182,7 +201,7 @@ class RfnetAPI : JavaPlugin(), Listener {
     // Sends a plugin message to ServerDiscovery running on bungee.
     fun sendPlayer(player: Player, archetype: String) {
         try {
-            val out = ByteStreams.newDataOutput()
+            @Suppress("UnstableApiUsage") val out = ByteStreams.newDataOutput()
 
             // See the spec for this in ServerDiscovery
             out.writeUTF("send:" + player.uniqueId + ":" + archetype)
@@ -263,8 +282,49 @@ class RfnetAPI : JavaPlugin(), Listener {
                 println("No update found!")
                 download.delete()
             }
+
+            if (!server.allowFlight) {
+                println("Applying configuration updates...")
+
+                val properties = Files.lines(Paths.get("server.properties"))
+                val newProperties = File("server.properties~").outputStream()
+
+                properties.map { it.replace("allow-flight=false", "allow-flight=true") }.forEach { line ->
+                    newProperties.write(line.encodeToByteArray())
+                }
+
+                val propertiesFile = File("server.properties")
+                propertiesFile.delete()
+                Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
+
+                val themisFolder = File("./plugins/Themis")
+                val themisJar = File("./plugins/Themis_0.9.0.jar")
+                val protocolLibFolder = File("./plugins/ProtocolLib")
+                val protocolLibJar = File("./plugins/ProtocolLib.jar")
+                if (themisJar.exists()) {
+                    protocolLibJar.deleteOnExit()
+                    protocolLibFolder.deleteRecursively()
+                    themisFolder.deleteRecursively()
+                    themisJar.deleteOnExit()
+                }
+            }
+
+            val protocolLibJar = File("./plugins/ProtocolLib-4.7.0.jar")
+
+            if (!protocolLibJar.exists()) {
+                println("Updating dependencies...")
+                download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
+            }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
         }
+    }
+
+    fun download(urlString: String, pluginName: String) {
+        val download = File("./plugins/$pluginName.jar")
+        val downloadStream = FileOutputStream(download)
+        val url = URL(urlString)
+        val urlConnection = url.openConnection()
+        IOUtils.copy(urlConnection.getInputStream(), downloadStream)
     }
 }

@@ -6,6 +6,7 @@ import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
+import io.lettuce.core.api.sync.RedisCommands
 import org.bson.Document
 import org.bukkit.Bukkit
 import java.util.*
@@ -15,6 +16,7 @@ import java.util.*
 // to save the hassle of passing in a bunch of values that are
 // just straight from the config anyways.
 class Database(private val serverConfig: ServerConfig) {
+    var ghost = false
     private val redisClient = RedisClient.create()
     private val redisConnection = redisClient.connect(
         RedisURI.create(serverConfig.redisURI)
@@ -83,7 +85,7 @@ class Database(private val serverConfig: ServerConfig) {
     // Updates the player count so that the bungee doesn't send
     // too many and cause them to get kicked.
     fun updatePlayerCount(playerct: Int) {
-        if (databaseClosed) {
+        if (databaseClosed || ghost) {
             throw NullPointerException("Database closed already!")
         } else {
             redisConnection.sync().hset(
@@ -94,7 +96,7 @@ class Database(private val serverConfig: ServerConfig) {
     }
 
     fun getTotalPlayercount(archetype: String): Int {
-        if (databaseClosed) {
+        if (databaseClosed || ghost) {
             throw NullPointerException("Database closed already!")
         } else {
             val servers = redisConnection.sync().smembers("allservers")
@@ -109,7 +111,7 @@ class Database(private val serverConfig: ServerConfig) {
     }
 
     fun getBusyChangingPwd(player: UUID): Boolean {
-        if (databaseClosed) {
+        if (databaseClosed || ghost) {
             throw NullPointerException("Database closed already!")
         } else {
             return redisConnection.sync()["changingpassword-$player"].toBoolean()
@@ -117,7 +119,7 @@ class Database(private val serverConfig: ServerConfig) {
     }
 
     fun setBusyChangingPwd(player: UUID, isBusy: Boolean) {
-        if (databaseClosed) {
+        if (databaseClosed || ghost) {
             throw NullPointerException("Database closed already!")
         } else {
             redisConnection.sync()["changingpassword-$player"] = isBusy.toString()
@@ -126,7 +128,7 @@ class Database(private val serverConfig: ServerConfig) {
 
     // Useful for api stuffs
     fun getCollection(databaseName: String, collectionName: String): MongoCollection<Document?> {
-        if (databaseClosed) {
+        if (databaseClosed || ghost) {
             throw NullPointerException("Database closed already!")
         } else {
             val db = mongoClient.getDatabase(databaseName)
@@ -136,6 +138,15 @@ class Database(private val serverConfig: ServerConfig) {
                 db.createCollection(collectionName)
                 db.getCollection(collectionName)
             }
+        }
+    }
+
+    fun getRedis(): RedisCommands<String, String> {
+        val client = redisConnection.sync()
+        if (databaseClosed || ghost || client == null) {
+            throw NullPointerException("Database closed already!")
+        } else {
+            return client
         }
     }
 

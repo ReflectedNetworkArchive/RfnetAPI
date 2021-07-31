@@ -12,7 +12,7 @@ import org.bukkit.plugin.IllegalPluginAccessException
  */
 fun getReflectedAPI(): ReflectedAPI {
     val plugin = Bukkit.getPluginManager().getPlugin("RfnetAPI")
-    if (plugin is RfnetAPI && plugin.api != null) {
+    if (plugin is RfnetAPI && !plugin.ghostMode && plugin.api != null) {
         return plugin.api!!
     } else {
         throw IllegalPluginAccessException("Plugin must depend on RfnetAPI to use getReflectedAPI()")

@@ -54,7 +54,7 @@ object ExceptionDispensary : Listener {
 
         for (player in Bukkit.getOnlinePlayers()) {
             if (player.hasPermission("rfnet.developer")) {
-                player.sendMessage(createException(id, report.toString()))
+                player.sendMessage(createException(document, report.toString()))
             }
         }
 

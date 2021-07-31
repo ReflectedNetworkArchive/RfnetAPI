@@ -6,6 +6,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bson.Document
+import org.bson.types.ObjectId
 import org.bukkit.Bukkit
 import java.util.*
 
@@ -100,6 +101,10 @@ object ModCommands {
             executor.sendMessage(Component.text("Player banned!").color(NamedTextColor.GREEN))
         }, "rfnet.ban", 2, "bs3")
 
+        getReflectedAPI().commandProvider.registerCommand({ _, arguments ->
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "bs3 ${arguments.getPlayer(1).uniqueId} \"Anti-Cheat ban: Go to rnwk.xyz/discord if false\"")
+        }, "rfnet.acban", 1, "acban")
+
         getReflectedAPI().commandProvider.registerCommand({executor, arguments ->
             val savedbans = getReflectedAPI().database.getCollection("punishments", "savedbans")
 
@@ -129,5 +134,19 @@ object ModCommands {
                     )
             )
         }, "rfnet.ban", 1, "bunsave")
+
+        getReflectedAPI().commandProvider.registerCommand({executor, arguments ->
+            val bans = getReflectedAPI().database.getCollection("punishments", "bans")
+
+            try {
+                if (bans.findOneAndDelete(eq("_id", ObjectId(arguments.getString(0)))) == null) {
+                    executor.sendMessage(Component.text("Ban with that ID not found.").color(NamedTextColor.RED))
+                } else {
+                    executor.sendMessage(Component.text("Player unbanned!").color(NamedTextColor.GREEN))
+                }
+            } catch (e: IllegalArgumentException) {
+                executor.sendMessage(Component.text("This command expects a ban ID.").color(NamedTextColor.RED))
+            }
+        }, "rfnet.ban", 1, "unban")
     }
 }
