@@ -46,7 +46,7 @@ class RfnetAPI : JavaPlugin(), Listener {
     override fun onEnable() {
         try {
             if (!server.allowFlight) {
-                restart()
+                Bukkit.getScheduler().runTaskLater(this, Runnable { restart() }, 20)
                 return
             }
 
@@ -232,8 +232,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             // Wait one second so players don't get Server Closed before being sent back to lobby
             Bukkit.getScheduler().runTaskLater(this, Runnable {
                 try {
-                    val runtime = Runtime.getRuntime()
-                    runtime.addShutdownHook(Thread {
+                    Runtime.getRuntime().addShutdownHook(Thread {
                         val processBuilder = ProcessBuilder("nohup", "sh", "restart.sh")
                         try {
                             processBuilder.directory(File("."))
@@ -296,9 +295,11 @@ class RfnetAPI : JavaPlugin(), Listener {
                     newProperties.write("$line\n".encodeToByteArray())
                 }
 
-                val propertiesFile = File("server.properties")
-                propertiesFile.delete()
-                Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
+                Runtime.getRuntime().addShutdownHook(Thread {
+                    val propertiesFile = File("server.properties")
+                    propertiesFile.delete()
+                    Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
+                })
 
                 val themisFolder = File("./plugins/Themis")
                 val themisJar = File("./plugins/Themis_0.9.0.jar")
@@ -306,9 +307,11 @@ class RfnetAPI : JavaPlugin(), Listener {
                 val protocolLibJar = File("./plugins/ProtocolLib.jar")
                 if (themisJar.exists()) {
                     protocolLibJar.deleteOnExit()
-                    protocolLibFolder.deleteRecursively()
-                    themisFolder.deleteRecursively()
                     themisJar.deleteOnExit()
+                    Runtime.getRuntime().addShutdownHook(Thread {
+                        protocolLibFolder.deleteRecursively()
+                        themisFolder.deleteRecursively()
+                    })
                 }
             }
 
