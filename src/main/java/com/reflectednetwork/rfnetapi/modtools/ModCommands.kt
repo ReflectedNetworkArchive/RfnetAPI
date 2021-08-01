@@ -102,7 +102,7 @@ object ModCommands {
         }, "rfnet.ban", 2, "bs3")
 
         getReflectedAPI().commandProvider.registerCommand({ _, arguments ->
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "bs3 ${arguments.getPlayer(0).uniqueId} \"SKYNET AntiCheat\"")
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "bs3 ${arguments.getPlayer(0).uniqueId} \"Server protected by Vulcan AntiCheat\"")
         }, "rfnet.acban", 1, "acban")
 
         getReflectedAPI().commandProvider.registerCommand({executor, arguments ->
