@@ -1,10 +1,6 @@
 package com.reflectednetwork.rfnetapi
 
 import com.google.common.io.ByteStreams
-import com.grinderwolf.swm.api.world.SlimeWorld
-import com.grinderwolf.swm.api.world.properties.SlimeProperties
-import com.grinderwolf.swm.api.world.properties.SlimePropertyMap
-import com.grinderwolf.swm.plugin.SWMPlugin
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.reflectednetwork.rfnetapi.modtools.ModCommands
@@ -32,13 +28,22 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    val ver = 30 // The current version
+    val ver = 31 // The current version
     private var disabledForUpdate = false
+
+    private val nextVer = ver + 1
+    // Credentials for a read-only user
+    private val spaceUser = "31faf87b-0584-449b-b5b4-542b711fedfd"
+    private val spacePassword = "eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJhdWQiOiIzMWZh" +
+            "Zjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJvcmdEb21haW4iOiJyZWZsZWN0ZWRuZXR3b3JrIiwibmFtZSI6InNlcnZl" +
+            "ci11cGRhdGVyIiwiaXNzIjoiaHR0cHM6XC9cL2pldGJyYWlucy5zcGFjZSIsInBlcm1fdG9rZW4iOiIzZE9ueW4zVjY4U0oiLCJwcmlu" +
+            "Y2lwYWxfdHlwZSI6IlNFUlZJQ0UiLCJpYXQiOjE2MjQ0Nzk3MDB9.BmoDM8WFtadwvF9506wpDugq7yNtaiCyWIzfX-cC4dGYSQgtTJr" +
+            "ISH85fYI0ukD8E4_xFN74xmwa6Pc1gI6kCYICFkk1YIREsdAS08m4KCtAM4iK5YFAD2aodlIOgGVVon7EEqTM8KHBCjIyEVk9R-Vj8tL" +
+            "i37j4cnubfo7VkMk"
 
     var api: ReflectedAPI? = null
     val serverConfig = ServerConfig()
     val database = Database(serverConfig)
-    var loadedMap: SlimeWorld? = null
     var minigameWorld = false
     private lateinit var permissionAPI: PermissionAPI
     var ghostMode = false
@@ -58,6 +63,9 @@ class RfnetAPI : JavaPlugin(), Listener {
 
             // Init the API and let any waiting plugins know that it's ready now.
             api = ReflectedAPI(this)
+
+            // Because of really dumb dependency issues, we've gotta do this
+            WorldPluginInterface.plugin = this
 
             permissionAPI = PermissionAPI(this)
             PermissionCommands.setupCommands()
@@ -86,11 +94,25 @@ class RfnetAPI : JavaPlugin(), Listener {
             server.pluginManager.registerEvents(ModEvents, this)
             server.pluginManager.registerEvents(permissionAPI, this)
 
-            // Check online receipts on occasion. Runs async so it isn't *too* expensive
-            // Well, the possible performance drop is worth convenience for buyers
+            // Check online receipts on occasion.
             server.scheduler.runTaskTimerAsynchronously(this, Runnable {
-                for (player in server.onlinePlayers) {
-                    PurchaseEvents.checkReceipts(player)
+                try {
+                    for (player in server.onlinePlayers) {
+                        PurchaseEvents.checkReceipts(player)
+                    }
+                } catch (e: Exception) {
+                    ExceptionDispensary.report(e, "checking receipts")
+                }
+            }, 400, 400)
+
+            // Also, check for updates if no one is online
+            server.scheduler.runTaskTimerAsynchronously(this, Runnable {
+                try {
+                    if (Bukkit.getOnlinePlayers().isEmpty() && updateCheck()) {
+                        restart()
+                    }
+                } catch (e: Exception) {
+                    ExceptionDispensary.report(e, "checking for updates")
                 }
             }, 400, 400)
 
@@ -99,63 +121,6 @@ class RfnetAPI : JavaPlugin(), Listener {
 
             // Some stuff should be run AFTER the server has fully loaded.
             server.scheduler.runTaskLater(this, Runnable {
-
-                // Load the worlds as defined in the config
-                // Start by setting up the SWM plugin
-                logger.info("Getting SWM plugin.")
-                try {
-                    if (Bukkit.getPluginManager().getPlugin("SlimeWorldManager") == null) {
-                        throw NoClassDefFoundError()
-                    }
-                    val slime = SWMPlugin.getInstance()
-                    if (slime != null) { // If slime plugin can't be found, we're not on a minigame server.
-                        logger.info("Configuring worlds...")
-                        val slimeMongoLoader = slime.getLoader("mongodb")
-
-                        // Now set some properties of the world
-                        val mapProperties = SlimePropertyMap()
-                        mapProperties.setValue(SlimeProperties.DIFFICULTY, "normal")
-                        mapProperties.setValue(SlimeProperties.SPAWN_X, 0)
-                        mapProperties.setValue(SlimeProperties.SPAWN_Y, 64)
-                        mapProperties.setValue(SlimeProperties.SPAWN_Z, 0)
-                        mapProperties.setValue(
-                            SlimeProperties.WORLD_TYPE,
-                            "FLAT"
-                        ) // removes void effect at lower y levels
-
-                        // And finally, find out which world to load.
-                        logger.info("Looking for worlds to load.")
-                        try {
-                            loadedMap = if (serverConfig.maps.size == 1) {
-                                // There is only one map to choose
-                                // Also that magic boolean before mapProperties is whether it's read only. No slime worlds we load
-                                // would be good to make editable (they are all minigame maps)
-                                slime.loadWorld(slimeMongoLoader, serverConfig.maps[0], true, mapProperties)
-                            } else { // A map must be chosen at random.
-                                val maps = serverConfig.maps
-                                val rand = Random()
-                                // See above for what the magic boolean is
-                                slime.loadWorld(
-                                    slimeMongoLoader,
-                                    maps[rand.nextInt(maps.size)],
-                                    true,
-                                    mapProperties
-                                )
-                            }
-                            logger.info("Loading ${loadedMap?.name}")
-                            slime.generateWorld(loadedMap)
-                            minigameWorld = true
-                        } catch (e: Exception) {
-                            // If the map fails to load, there's nothing to connect to, so stop the server.
-                            ExceptionDispensary.report(e, "loading map")
-                            logger.log(Level.SEVERE, "Error loading a map! The server has to shut down!")
-                            server.shutdown()
-                        }
-                    }
-                } catch (e: NoClassDefFoundError) {
-                    logger.info("An error occured when attempting to load SWM, so minigame world support has been disabled.")
-                }
-
                 // Add this server's information to Redis for ServerDiscovery.
                 database.setAvailable(true)
             }, 1) // 1 tick, so waits until the server is fully started (started ticking)
@@ -185,7 +150,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             }
 
             if (!disabledForUpdate) {
-                updateCheck()
+                update()
                 // Remove this server from the list of ones that are connectable
                 database.setAvailable(false)
                 database.updatePlayerCount(0)
@@ -223,7 +188,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             for (player in Bukkit.getOnlinePlayers()) {
                 sendPlayer(player, serverConfig.archetype)
             }
-            updateCheck()
+            update()
 
             // And then close the connections to the database
             // so we don't overload them.
@@ -252,20 +217,33 @@ class RfnetAPI : JavaPlugin(), Listener {
         }
     }
 
-    private fun updateCheck() {
+    private fun updateCheck(): Boolean {
+        return try {
+            val basicAuthenticationEncoded =
+                Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
+            val url =
+                URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
+            val urlConnection = url.openConnection()
+            urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
+            urlConnection.getInputStream().readAllBytes()
+            true
+        }  catch (e: FileNotFoundException) {
+            false
+        } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
+            if (e.message?.contains("404") != true) throw e
+            false
+        }
+    }
+
+    private fun update() {
         try {
             println("Checking for updates...")
             // Check for updates
-            val nextVer = ver + 1
-            // Credentials for a read-only user
-            val username = "31faf87b-0584-449b-b5b4-542b711fedfd"
-            val password =
-                "eyJhbGciOiJSUzUxMiJ9.eyJzdWIiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJhdWQiOiIzMWZhZjg3Yi0wNTg0LTQ0OWItYjViNC01NDJiNzExZmVkZmQiLCJvcmdEb21haW4iOiJyZWZsZWN0ZWRuZXR3b3JrIiwibmFtZSI6InNlcnZlci11cGRhdGVyIiwiaXNzIjoiaHR0cHM6XC9cL2pldGJyYWlucy5zcGFjZSIsInBlcm1fdG9rZW4iOiIzZE9ueW4zVjY4U0oiLCJwcmluY2lwYWxfdHlwZSI6IlNFUlZJQ0UiLCJpYXQiOjE2MjQ0Nzk3MDB9.BmoDM8WFtadwvF9506wpDugq7yNtaiCyWIzfX-cC4dGYSQgtTJrISH85fYI0ukD8E4_xFN74xmwa6Pc1gI6kCYICFkk1YIREsdAS08m4KCtAM4iK5YFAD2aodlIOgGVVon7EEqTM8KHBCjIyEVk9R-Vj8tLi37j4cnubfo7VkMk"
-            val download = File("./plugins/RfnetAPI-$nextVer.jar")
+            val pluginUpdateFile = File("./plugins/RfnetAPI-$nextVer.jar")
             try {
-                val downloadStream = FileOutputStream(download)
+                val downloadStream = FileOutputStream(pluginUpdateFile)
                 val basicAuthenticationEncoded =
-                    Base64.getEncoder().encodeToString("$username:$password".toByteArray(charset("UTF-8")))
+                    Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
                 val url =
                     URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
                 val urlConnection = url.openConnection()
@@ -275,11 +253,11 @@ class RfnetAPI : JavaPlugin(), Listener {
                 println("Update complete!")
             }  catch (e: FileNotFoundException) {
                 println("No update found!")
-                download.delete()
+                pluginUpdateFile.delete()
             } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
                 if (e.message?.contains("404") != true) throw e
                 println("No update found!")
-                download.delete()
+                pluginUpdateFile.delete()
             }
 
             if (!server.allowFlight || server.onlineMode) {

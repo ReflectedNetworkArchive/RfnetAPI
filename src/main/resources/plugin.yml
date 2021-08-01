@@ -6,6 +6,6 @@ softdepend:
   - SlimeWorldManager
 api-version: 1.17
 libraries:
-  - io.lettuce:lettuce-core:6.1.1.RELEASE
-  - org.mongodb:mongodb-driver-sync:4.2.3
+  - io.lettuce:lettuce-core:6.1.4.RELEASE
+  - org.mongodb:mongodb-driver-sync:4.3.0
   - org.jetbrains.kotlin:kotlin-stdlib:1.5.21
