@@ -1,6 +1,7 @@
 package com.reflectednetwork.rfnetapi
 
 import com.google.common.io.ByteStreams
+import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.reflectednetwork.rfnetapi.modtools.ModCommands
@@ -28,7 +29,7 @@ import java.util.logging.Level
 import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
-    val ver = 31 // The current version
+    val ver = description.version.toInt()
     private var disabledForUpdate = false
 
     private val nextVer = ver + 1
@@ -50,7 +51,10 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onEnable() {
         try {
-            if (!server.allowFlight || server.onlineMode) {
+            if (updateCheck()) {
+                async {
+                    logger.log(Level.SEVERE, "Plugin or dependencies out of date! Will restart server shortly.")
+                }
                 Bukkit.getScheduler().runTaskLater(this, Runnable { restart() }, 20)
                 return
             }
@@ -66,6 +70,8 @@ class RfnetAPI : JavaPlugin(), Listener {
 
             // Because of really dumb dependency issues, we've gotta do this
             WorldPluginInterface.plugin = this
+
+
 
             permissionAPI = PermissionAPI(this)
             PermissionCommands.setupCommands()
@@ -218,6 +224,13 @@ class RfnetAPI : JavaPlugin(), Listener {
     }
 
     private fun updateCheck(): Boolean {
+        val worldLoaderJar = File("./plugins/RFNETAPI_WorldLoader-1.jar")
+        val protocolLibJar = File("./plugins/ProtocolLib-4.7.0.jar")
+
+        if (!worldLoaderJar.exists() || !protocolLibJar.exists() || (!server.allowFlight || server.onlineMode)) {
+            return true
+        }
+
         return try {
             val basicAuthenticationEncoded =
                 Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
@@ -300,12 +313,9 @@ class RfnetAPI : JavaPlugin(), Listener {
                 }
             }
 
-            val protocolLibJar = File("./plugins/ProtocolLib-4.7.0.jar")
-
-            if (!protocolLibJar.exists()) {
-                println("Updating dependencies...")
-                download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
-            }
+            println("Checking dependencies...")
+            download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
+            download("https://www.dropbox.com/s/od0syes7xubidh3/RFNETAPI_WorldLoader-1.jar?dl=1", "RFNETAPI_WorldLoader-1")
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
         }
@@ -313,9 +323,12 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     fun download(urlString: String, pluginName: String) {
         val download = File("./plugins/$pluginName.jar")
-        val downloadStream = FileOutputStream(download)
-        val url = URL(urlString)
-        val urlConnection = url.openConnection()
-        IOUtils.copy(urlConnection.getInputStream(), downloadStream)
+        if (!download.exists()) {
+            println("Downloading $pluginName.jar")
+            val downloadStream = FileOutputStream(download)
+            val url = URL(urlString)
+            val urlConnection = url.openConnection()
+            IOUtils.copy(urlConnection.getInputStream(), downloadStream)
+        }
     }
 }
