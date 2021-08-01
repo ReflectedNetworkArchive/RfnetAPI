@@ -44,7 +44,7 @@ object ModEvents : Listener {
                         Component.text("Ban ID: $banid\n")
                             .color(NamedTextColor.YELLOW)
                     ).append(
-                        Component.text("Reason: \"$reason\"\n\n")
+                        Component.text("$reason\n\n")
                             .color(NamedTextColor.YELLOW)
                     ).append(
                         Component.text("$timeLeft left.")

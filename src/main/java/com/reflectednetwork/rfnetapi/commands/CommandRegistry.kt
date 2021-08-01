@@ -110,9 +110,9 @@ class CommandRegistry : Listener {
             val commandStr = StringBuilder()
             commandStr.append("$commandLabel ")
             for (arg in args) {
-                commandStr.append("\"$arg\"")
+                commandStr.append("$arg ")
             }
-            getReflectedAPI().commandProvider.executeCommand(sender, commandStr.toString())
+            getReflectedAPI().commandProvider.executeCommand(sender, commandStr.toString().trimEnd())
             return false
         }
     }
