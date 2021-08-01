@@ -48,8 +48,8 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
 
     fun getLoadedMap(): World {
         try {
-            return plugin.loadedMap?.let {
-                Bukkit.getWorld(it.name)
+            return WorldPluginInterface.worldName?.let {
+                Bukkit.getWorld(it)
             } ?: Bukkit.getWorlds()[0]
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "getting loaded map")

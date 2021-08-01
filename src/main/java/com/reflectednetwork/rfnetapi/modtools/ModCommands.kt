@@ -16,7 +16,8 @@ object ModCommands {
         "Rule 2: EULA Violation or Criminal acts",
         "Rule 3: Harmful or Explicit Content",
         "Rule 4: Alternate Account",
-        "Rule 5: Cheating, Exploits, or Modified Client"
+        "Rule 5: Cheating, Exploits, or Modified Client (Excluding LabyMod)",
+        "Rule 6: Spam, Scams, and Advertising"
     )
 
     val banTimes = listOf(
