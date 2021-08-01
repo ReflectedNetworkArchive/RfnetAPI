@@ -45,8 +45,8 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onEnable() {
         try {
-            if (!server.allowFlight) {
-                restart()
+            if (!server.allowFlight || server.onlineMode) {
+                Bukkit.getScheduler().runTaskLater(this, Runnable { restart() }, 20)
                 return
             }
 
@@ -232,8 +232,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             // Wait one second so players don't get Server Closed before being sent back to lobby
             Bukkit.getScheduler().runTaskLater(this, Runnable {
                 try {
-                    val runtime = Runtime.getRuntime()
-                    runtime.addShutdownHook(Thread {
+                    Runtime.getRuntime().addShutdownHook(Thread {
                         val processBuilder = ProcessBuilder("nohup", "sh", "restart.sh")
                         try {
                             processBuilder.directory(File("."))
@@ -283,19 +282,31 @@ class RfnetAPI : JavaPlugin(), Listener {
                 download.delete()
             }
 
-            if (!server.allowFlight) {
+            if (!server.allowFlight || server.onlineMode) {
                 println("Applying configuration updates...")
 
                 val properties = Files.lines(Paths.get("server.properties"))
                 val newProperties = File("server.properties~").outputStream()
 
-                properties.map { it.replace("allow-flight=false", "allow-flight=true") }.forEach { line ->
-                    newProperties.write(line.encodeToByteArray())
+                properties.map {
+                    when (it) {
+                        "allow-flight=false" -> "allow-flight=true"
+                        "network-compression-threshold=256" -> "network-compression-threshold=-1"
+                        "view-distance=10" -> "view-distance=5"
+                        "allow-nether=true" -> "allow-nether=${serverConfig.archetype == "survival"}"
+                        "online-mode=true" -> "online-mode=false"
+                        "server-port=25565" -> "server-port=${serverConfig.address.split(":").last()}"
+                        else -> it
+                    }
+                }.forEach { line ->
+                    newProperties.write("$line\n".encodeToByteArray())
                 }
 
-                val propertiesFile = File("server.properties")
-                propertiesFile.delete()
-                Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
+                Runtime.getRuntime().addShutdownHook(Thread {
+                    val propertiesFile = File("server.properties")
+                    propertiesFile.delete()
+                    Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
+                })
 
                 val themisFolder = File("./plugins/Themis")
                 val themisJar = File("./plugins/Themis_0.9.0.jar")
@@ -303,9 +314,11 @@ class RfnetAPI : JavaPlugin(), Listener {
                 val protocolLibJar = File("./plugins/ProtocolLib.jar")
                 if (themisJar.exists()) {
                     protocolLibJar.deleteOnExit()
-                    protocolLibFolder.deleteRecursively()
-                    themisFolder.deleteRecursively()
                     themisJar.deleteOnExit()
+                    Runtime.getRuntime().addShutdownHook(Thread {
+                        protocolLibFolder.deleteRecursively()
+                        themisFolder.deleteRecursively()
+                    })
                 }
             }
 

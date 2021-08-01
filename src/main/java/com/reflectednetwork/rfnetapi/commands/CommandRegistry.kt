@@ -1,6 +1,7 @@
 package com.reflectednetwork.rfnetapi.commands
 
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.getReflectedAPI
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TextComponent
@@ -105,7 +106,14 @@ class CommandRegistry : Listener {
 
     private class EmptyCommand(name: String) : org.bukkit.command.Command(name) {
         override fun execute(sender: CommandSender, commandLabel: String, args: Array<String>): Boolean {
-            return true // Ignore that this command exists
+            // If we get here, this command was called by some bukkit function.
+            val commandStr = StringBuilder()
+            commandStr.append("$commandLabel ")
+            for (arg in args) {
+                commandStr.append("$arg ")
+            }
+            getReflectedAPI().commandProvider.executeCommand(sender, commandStr.toString().trimEnd())
+            return false
         }
     }
 
