@@ -1,5 +1,6 @@
 package com.reflectednetwork.rfnetapi
 
+import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -10,10 +11,12 @@ import org.bukkit.event.player.PlayerJoinEvent
 object JoinEventWorkaround : Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     private fun playerJoin(event: PlayerJoinEvent) {
-        try {
-            tryMapTP(event.player)
-        } catch (e: Exception) {
-            ExceptionDispensary.report(e, "player world teleport")
+        async {
+            try {
+                tryMapTP(event.player)
+            } catch (e: Exception) {
+                ExceptionDispensary.report(e, "player world teleport")
+            }
         }
     }
 

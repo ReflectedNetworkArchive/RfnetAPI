@@ -78,10 +78,12 @@ object ExceptionDispensary : Listener {
 
     @EventHandler
     fun playerJoinEvent(event: PlayerJoinEvent) {
-        if (event.player.hasPermission("rfnet.developer")) {
-            ReflectedAPI.get().database.getCollection("bugreps", "exceptions").find().forEach {
-                it?.let {
-                    event.player.sendMessage(createException(it.getString("minid"), it.getString("report")))
+        async {
+            if (event.player.hasPermission("rfnet.developer")) {
+                ReflectedAPI.get().database.getCollection("bugreps", "exceptions").find().forEach {
+                    it?.let {
+                        event.player.sendMessage(createException(it.getString("minid"), it.getString("report")))
+                    }
                 }
             }
         }
