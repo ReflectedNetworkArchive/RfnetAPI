@@ -13,14 +13,17 @@ import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.io.BufferedReader
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.URL
+import java.util.*
 
 object DefaultCommands {
+    private var playersChecking = mutableSetOf<UUID>()
     private var availableGames = listOf(
         "spleefrun",
         "survival",
@@ -159,25 +162,35 @@ object DefaultCommands {
             }, "rfnet.developer", 1, "excclear"
         )
 
-        getReflectedAPI().commandProvider.registerCommands({ executor, _ ->
-                async {
-                    executor.sendMessage(
-                        Component.text("☞ ")
-                            .color(NamedTextColor.GRAY)
-                            .append(
-                                Component.text("Server running Reflected API v${getReflectedAPI().getVersion()}")
-                                    .color(NamedTextColor.GREEN)
-                            ).append(
-                                Component.text(" - Minigame support ${if (getReflectedAPI().isMinigameWorld()) "enabled" else "disabled"}")
-                                    .color(NamedTextColor.GRAY)
-                            ).append(
-                                Component.text(" - Database ${if (getReflectedAPI().database.isConnected()) "connected" else "unavailable"}")
-                                    .color(NamedTextColor.GRAY)
-                            ).append(
-                                Component.text(" - API ${if (WorldPluginInterface.plugin?.updateCheck() == true) "outdated" else "up to date"}")
-                                    .color(NamedTextColor.GRAY)
-                            )
-                    )
+        getReflectedAPI().commandProvider.registerCommands(
+            { executor, _ ->
+                if (executor is Player && !playersChecking.contains(executor.uniqueId)) {
+                    playersChecking.add(executor.uniqueId)
+                    executor.sendMessage(Component.text("Collecting information...").color(NamedTextColor.AQUA))
+                    async {
+                        executor.sendMessage(
+                            Component.text("☞ ")
+                                .color(NamedTextColor.GRAY)
+                                .append(
+                                    Component.text("Server running Reflected API v${getReflectedAPI().getVersion()}")
+                                        .color(NamedTextColor.GREEN)
+                                ).append(
+                                    Component.text("\n - Slime worlds ${if (getReflectedAPI().isMinigameWorld()) "enabled" else "disabled"}")
+                                        .color(NamedTextColor.GRAY)
+                                ).append(
+                                    Component.text("\n - Database ${if (getReflectedAPI().database.isConnected()) "connected" else "unavailable"}")
+                                        .color(NamedTextColor.GRAY)
+                                ).append(
+                                    Component.text("\n - API ${if (WorldPluginInterface.plugin?.updateCheck() == true) "outdated" else "up to date"}")
+                                        .color(NamedTextColor.GRAY)
+                                ).append(
+                                    Component.text("\n - Core version ${Bukkit.getMinecraftVersion()}")
+                                        .color(NamedTextColor.GRAY)
+                                )
+                        )
+                    }.then { playersChecking.remove(executor.uniqueId) }
+                } else {
+                    executor.sendMessage(Component.text("Please wait to use that command!").color(NamedTextColor.RED))
                 }
             },
             0,
