@@ -3,6 +3,7 @@ package com.reflectednetwork.rfnetapi
 import com.google.common.io.ByteStreams
 import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
+import com.reflectednetwork.rfnetapi.loginstreaks.LoginStreakEvents
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.reflectednetwork.rfnetapi.modtools.ModCommands
 import com.reflectednetwork.rfnetapi.modtools.ModEvents
@@ -98,6 +99,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             server.pluginManager.registerEvents(JoinEventWorkaround, this)
             server.pluginManager.registerEvents(PlayerCountEvents, this)
             server.pluginManager.registerEvents(ModEvents, this)
+            server.pluginManager.registerEvents(LoginStreakEvents, this)
             server.pluginManager.registerEvents(permissionAPI, this)
 
             // Check online receipts on occasion.
@@ -223,7 +225,7 @@ class RfnetAPI : JavaPlugin(), Listener {
         }
     }
 
-    private fun updateCheck(): Boolean {
+    fun updateCheck(): Boolean {
         val worldLoaderJar = File("./plugins/RFNETAPI_WorldLoader-1.jar")
         val protocolLibJar = File("./plugins/ProtocolLib-4.7.0.jar")
 

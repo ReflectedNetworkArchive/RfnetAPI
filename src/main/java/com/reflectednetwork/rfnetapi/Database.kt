@@ -4,6 +4,7 @@ import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
+import com.mongodb.client.model.Filters.eq
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
 import io.lettuce.core.api.sync.RedisCommands
@@ -147,6 +148,20 @@ class Database(private val serverConfig: ServerConfig) {
             throw NullPointerException("Database closed already!")
         } else {
             return client
+        }
+    }
+
+    fun isConnected(): Boolean {
+        return try {
+            getRedis().set("conntest", "true")
+            val a = getRedis().get("conntest") == "true"
+            val collection = getCollection("conntest", "conntest")
+            val b = collection.find(eq("_id", collection.insertOne(Document().append("connected", true)).insertedId)).first()?.getBoolean("connected") == true
+            collection.deleteMany(eq("conntest", true))
+            getRedis().set("conntest", "")
+            a && b
+        } catch (e: Exception) {
+            false
         }
     }
 
