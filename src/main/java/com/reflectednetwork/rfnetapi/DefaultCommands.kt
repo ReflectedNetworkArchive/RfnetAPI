@@ -160,14 +160,25 @@ object DefaultCommands {
         )
 
         getReflectedAPI().commandProvider.registerCommands({ executor, _ ->
-                executor.sendMessage(
-                    Component.text("☞ ")
-                        .color(NamedTextColor.GRAY)
-                        .append(
-                            Component.text("Server running Reflected API v${getReflectedAPI().getVersion()}")
-                                .color(NamedTextColor.GREEN)
-                        )
-                )
+                async {
+                    executor.sendMessage(
+                        Component.text("☞ ")
+                            .color(NamedTextColor.GRAY)
+                            .append(
+                                Component.text("Server running Reflected API v${getReflectedAPI().getVersion()}")
+                                    .color(NamedTextColor.GREEN)
+                            ).append(
+                                Component.text(" - Minigame support ${if (getReflectedAPI().isMinigameWorld()) "enabled" else "disabled"}")
+                                    .color(NamedTextColor.GRAY)
+                            ).append(
+                                Component.text(" - Database ${if (getReflectedAPI().database.isConnected()) "connected" else "unavailable"}")
+                                    .color(NamedTextColor.GRAY)
+                            ).append(
+                                Component.text(" - API ${if (WorldPluginInterface.plugin?.updateCheck() == true) "outdated" else "up to date"}")
+                                    .color(NamedTextColor.GRAY)
+                            )
+                    )
+                }
             },
             0,
             "version",
@@ -178,6 +189,11 @@ object DefaultCommands {
 
     private fun checkVoteAndSendToSurvival(player: Player) {
         try {
+            if (player.hasPermission("rfnet.rank.plus")) {
+                getReflectedAPI().sendPlayer(player, "survival")
+                return
+            }
+
             async {
                 val url = URL("https://reflected.network/voted/" + player.name)
                 val connection = url.openConnection()
