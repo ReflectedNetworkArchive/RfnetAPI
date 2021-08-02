@@ -13,7 +13,6 @@ import com.reflectednetwork.rfnetapi.purchases.PurchaseEvents
 import com.reflectednetwork.rfnetapi.purchases.PurchaseGUI
 import org.apache.commons.io.IOUtils
 import org.bstats.bukkit.Metrics
-import org.bstats.charts.MultiLineChart
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
@@ -27,7 +26,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import java.util.logging.Level
-import kotlin.math.roundToInt
 
 class RfnetAPI : JavaPlugin(), Listener {
     val ver = description.version.toInt()
@@ -135,16 +133,6 @@ class RfnetAPI : JavaPlugin(), Listener {
 
             // Stats
             val metrics = Metrics(this, 12072)
-            server.scheduler.runTaskTimerAsynchronously(this, Runnable {
-                metrics.addCustomChart(MultiLineChart("mspt") {
-                    mapOf(
-                        Pair(
-                            serverConfig.id,
-                            server.averageTickTime.roundToInt()
-                        )
-                    )
-                })
-            }, 20, 20)
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "enabling plugin")
         }
