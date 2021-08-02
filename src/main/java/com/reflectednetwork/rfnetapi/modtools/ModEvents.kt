@@ -1,6 +1,7 @@
 package com.reflectednetwork.rfnetapi.modtools
 
 import com.mongodb.client.model.Filters.*
+import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.getReflectedAPI
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
@@ -56,47 +57,49 @@ object ModEvents : Listener {
 
     @EventHandler
     fun playerJoinEvent(event: PlayerJoinEvent) {
-        if (event.player.hasPermission("rfnet.ban")) {
-            val bans = getReflectedAPI().database.getCollection("punishments", "bans")
-            val savedbans = getReflectedAPI().database.getCollection("punishments", "savedbans")
+        async {
+            if (event.player.hasPermission("rfnet.ban")) {
+                val bans = getReflectedAPI().database.getCollection("punishments", "bans")
+                val savedbans = getReflectedAPI().database.getCollection("punishments", "savedbans")
 
-            savedbans.find().forEach {
-                it?.let { document ->
-                    event.player.sendMessage(
-                        Component.text("Ban for review:")
-                            .color(NamedTextColor.GREEN)
-                            .append(
-                                Component.text("\nPlayer: ")
-                                    .color(NamedTextColor.GRAY)
-                            ).append(
-                                Component.text(document.getString("playername"))
-                                    .color(NamedTextColor.YELLOW)
-                            ).append(
-                                Component.text("\nReason: ")
-                                    .color(NamedTextColor.GRAY)
-                            ).append(
-                                Component.text(document.getString("reason"))
-                                    .color(NamedTextColor.YELLOW)
-                            ).append(
-                                Component.text("\nMarked for ban by: ")
-                                    .color(NamedTextColor.GRAY)
-                            ).append(
-                                Component.text(document.getString("author"))
-                                    .color(NamedTextColor.YELLOW)
-                            ).append(
-                                Component.text("\nBAN PLAYER")
-                                    .color(NamedTextColor.GREEN)
-                                    .clickEvent(
-                                        ClickEvent.runCommand("/bs3 ${document.getString("uuid")} \"${document.getString("reason")}\"")
-                                    )
-                            ).append(
-                                Component.text(" CANCEL BAN")
-                                    .color(NamedTextColor.RED)
-                                    .clickEvent(
-                                        ClickEvent.runCommand("/bunsave ${document.getString("uuid")}")
-                                    )
-                            )
-                    )
+                savedbans.find().forEach {
+                    it?.let { document ->
+                        event.player.sendMessage(
+                            Component.text("Ban for review:")
+                                .color(NamedTextColor.GREEN)
+                                .append(
+                                    Component.text("\nPlayer: ")
+                                        .color(NamedTextColor.GRAY)
+                                ).append(
+                                    Component.text(document.getString("playername"))
+                                        .color(NamedTextColor.YELLOW)
+                                ).append(
+                                    Component.text("\nReason: ")
+                                        .color(NamedTextColor.GRAY)
+                                ).append(
+                                    Component.text(document.getString("reason"))
+                                        .color(NamedTextColor.YELLOW)
+                                ).append(
+                                    Component.text("\nMarked for ban by: ")
+                                        .color(NamedTextColor.GRAY)
+                                ).append(
+                                    Component.text(document.getString("author"))
+                                        .color(NamedTextColor.YELLOW)
+                                ).append(
+                                    Component.text("\nBAN PLAYER")
+                                        .color(NamedTextColor.GREEN)
+                                        .clickEvent(
+                                            ClickEvent.runCommand("/bs3 ${document.getString("uuid")} \"${document.getString("reason")}\"")
+                                        )
+                                ).append(
+                                    Component.text(" CANCEL BAN")
+                                        .color(NamedTextColor.RED)
+                                        .clickEvent(
+                                            ClickEvent.runCommand("/bunsave ${document.getString("uuid")}")
+                                        )
+                                )
+                        )
+                    }
                 }
             }
         }
