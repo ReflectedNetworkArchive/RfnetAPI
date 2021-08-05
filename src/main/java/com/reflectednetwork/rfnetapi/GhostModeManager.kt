@@ -10,12 +10,15 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 
 object GhostModeManager : Listener {
+    lateinit var plugin: RfnetAPI
+
     fun enable(plugin: RfnetAPI) {
+        this.plugin = plugin
         Bukkit.getPluginManager().registerEvents(this, plugin)
         plugin.database.setAvailable(true)
     }
 
-    fun disable(plugin: RfnetAPI) {
+    fun disable() {
         plugin.database.setAvailable(false)
         plugin.database.close()
     }
@@ -32,6 +35,7 @@ object GhostModeManager : Listener {
                 | To go to the lobby, chat "lobby"
             """.trimMargin()).color(NamedTextColor.RED)
         )
+        event.player.addAttachment(plugin).setPermission("gopaint.use", true)
     }
 
     @EventHandler

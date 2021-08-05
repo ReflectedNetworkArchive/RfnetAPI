@@ -141,7 +141,7 @@ class RfnetAPI : JavaPlugin(), Listener {
     override fun onDisable() {
         try {
             if (ghostMode) {
-                GhostModeManager.disable(this)
+                GhostModeManager.disable()
                 return
             }
 
