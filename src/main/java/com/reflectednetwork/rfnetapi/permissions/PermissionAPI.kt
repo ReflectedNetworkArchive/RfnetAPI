@@ -10,6 +10,7 @@ import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
+import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -100,6 +101,14 @@ class PermissionAPI(private val plugin: RfnetAPI) : Listener {
                 val perms = groupPermissions.getMutableSet<String>("permissions")
                 for (permission in perms) {
                     permissionAttachment.setPermission(permission, true)
+
+                    if (permission.endsWith("*")) {
+                        for (perm in Bukkit.getPluginManager().permissions) {
+                            if (perm.name.startsWith(permission.trimEnd('*'))) {
+                                permissionAttachment.setPermission(perm, true)
+                            }
+                        }
+                    }
                 }
             }
         }
