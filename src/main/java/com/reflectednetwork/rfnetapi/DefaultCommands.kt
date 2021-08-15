@@ -202,7 +202,8 @@ object DefaultCommands {
 
     private fun checkVoteAndSendToSurvival(player: Player) {
         try {
-            if (player.hasPermission("rfnet.rank.plus")) {
+            if (player.hasPermission("rfnet.rank.plus") || player.clientBrandName == "Reflected-Official-Client") {
+                MedallionAPI.giveMedallion(player, "join_survivals3", "Join Survival S3")
                 getReflectedAPI().sendPlayer(player, "survival")
                 return
             }
