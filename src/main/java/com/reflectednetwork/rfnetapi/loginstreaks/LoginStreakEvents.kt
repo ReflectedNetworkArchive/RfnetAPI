@@ -17,7 +17,7 @@ object LoginStreakEvents : Listener {
             val redis = getReflectedAPI().database.getRedis()
 
             val key = "${event.player.uniqueId}-lastjoinday"
-            val today = (Instant.now().epochSecond + 300) / secondsInDay
+            val today = (Instant.now().epochSecond - 300) / secondsInDay
             val lastJoinDay = redis.get(key)?.toLong()
 
             if (lastJoinDay != today) {
