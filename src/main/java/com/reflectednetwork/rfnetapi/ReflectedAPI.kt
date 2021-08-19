@@ -53,7 +53,7 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
         try {
             return WorldPluginInterface.worldName?.let {
                 Bukkit.getWorld(it)
-            } ?: getReflectedAPI().getLoadedMap()
+            } ?: Bukkit.getWorld("world")!!
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "getting loaded map")
             throw NullPointerException("Error whilst getting loaded map. This was reported to the internal exception log.")
