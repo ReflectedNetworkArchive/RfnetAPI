@@ -225,8 +225,9 @@ class RfnetAPI : JavaPlugin(), Listener {
     fun updateCheck(): Boolean {
         val worldLoaderJar = File("./plugins/RFNETAPI_WorldLoader-1.jar")
         val protocolLibJar = File("./plugins/ProtocolLib-4.7.0.jar")
+        val cclibCompatJar = File("./plugins/CCLib-1.0-SNAPSHOT.jar")
 
-        if (!worldLoaderJar.exists() || !protocolLibJar.exists() || (!server.allowFlight || server.onlineMode)) {
+        if (!worldLoaderJar.exists() || !protocolLibJar.exists() || !cclibCompatJar.exists() || (!server.allowFlight || server.onlineMode)) {
             return true
         }
 
@@ -315,6 +316,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             println("Checking dependencies...")
             download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
             download("https://www.dropbox.com/s/od0syes7xubidh3/RFNETAPI_WorldLoader-1.jar?dl=1", "RFNETAPI_WorldLoader-1")
+            download("https://www.dropbox.com/s/v569132ztwnfqbr/CCLib-1.0-SNAPSHOT.jar?dl=1", "CCLib-1.0-SNAPSHOT")
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
         }
