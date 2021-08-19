@@ -1,308 +1,295 @@
-package com.reflectednetwork.rfnetapi.cclibcompat;
+@file:Suppress("DEPRECATION")
 
-import com.reflectednetwork.rfnetapi.WorldPluginInterface;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Firework;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.FireworkMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import top.cavecraft.cclib.ICCLib.IGameUtils;
-import top.cavecraft.cclib.ICCLib.ITickReq;
+package com.reflectednetwork.rfnetapi.cclibcompat
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-
-import static com.reflectednetwork.rfnetapi.GetReflectedAPIKt.getReflectedAPI;
-import static org.bukkit.Bukkit.getServer;
+import com.reflectednetwork.rfnetapi.WorldPluginInterface.plugin
+import com.reflectednetwork.rfnetapi.getReflectedAPI
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import org.bukkit.*
+import org.bukkit.entity.EntityType
+import org.bukkit.entity.Firework
+import org.bukkit.entity.Item
+import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
+import org.bukkit.event.Listener
+import org.bukkit.event.entity.FoodLevelChangeEvent
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
+import top.cavecraft.cclib.ICCLib.IGameUtils
+import top.cavecraft.cclib.ICCLib.IGameUtils.GemAmount
+import top.cavecraft.cclib.ICCLib.ITickReq
+import java.util.*
 
 /**
  * This class exists only for backwards compatibility.
  */
-@Deprecated
-@SuppressWarnings("ALL")
-public class GameUtils implements IGameUtils, Listener {
-    private final Component returnToLobbyName = Component.text("Return to Lobby").color(NamedTextColor.RED);
+@Deprecated("This class exists only for backwards compatibility")
+class GameUtils : IGameUtils, Listener {
+    private val returnToLobbyName: Component = Component.text("Return to Lobby").color(NamedTextColor.RED)
+    private var ticksToStart = 0
+    private var ticksPassed = 0
+    private var maxPlayers = 0
+    private val teleportToArenaTicks = 60
+    private var tickRequirements: List<ITickReq>
+    private var startGame: Runnable
+    private var teleport: Runnable
+    private var started = false
+    private val interactBlockList = listOf(
+        Material.ACACIA_DOOR,
+        Material.BIRCH_DOOR,
+        Material.DARK_OAK_DOOR,
+        Material.IRON_DOOR,
+        Material.JUNGLE_DOOR,
+        Material.SPRUCE_DOOR,
+        Material.OAK_TRAPDOOR,
+        Material.OAK_DOOR,
+        Material.IRON_TRAPDOOR,
+        Material.LEVER,
+        Material.STONE_BUTTON,
+        Material.OAK_BUTTON
+    )
 
-    int ticksToStart = 0;
-    int ticksPassed = 0;
-    int maxPlayers = 0;
-    final int teleportToArenaTicks = 60;
-    List<ITickReq> tickRequirements;
-    Runnable startGame;
-    Runnable teleport;
-    public boolean started = false;
-
-    private final List<Material> interactBlockList = Arrays.asList(
-            Material.ACACIA_DOOR,
-            Material.BIRCH_DOOR,
-            Material.DARK_OAK_DOOR,
-            Material.IRON_DOOR,
-            Material.JUNGLE_DOOR,
-            Material.SPRUCE_DOOR,
-            Material.OAK_TRAPDOOR,
-            Material.OAK_DOOR,
-            Material.IRON_TRAPDOOR,
-            Material.LEVER,
-            Material.STONE_BUTTON,
-            Material.OAK_BUTTON
-    );
-
-    public GameUtils(List<ITickReq> tickRequirements) {
-        this.tickRequirements = tickRequirements;
-        this.startGame = () -> {};
-        this.teleport = () -> {};
-
-        for (ITickReq tickReq : tickRequirements) {
-            if (((TickReq)tickReq).getNumberOfTicks() > ticksToStart) {
-                ticksToStart = ((TickReq)tickReq).getNumberOfTicks();
+    constructor(tickRequirements: List<ITickReq>) {
+        this.tickRequirements = tickRequirements
+        startGame = Runnable {}
+        teleport = Runnable {}
+        for (tickReq in tickRequirements) {
+            if ((tickReq as TickReq).numberOfTicks > ticksToStart) {
+                ticksToStart = tickReq.numberOfTicks
             }
-
-            if (((TickReq)tickReq).getNumberOfPlayers() > maxPlayers) {
-                maxPlayers = ((TickReq)tickReq).getNumberOfPlayers();
+            if (tickReq.numberOfPlayers > maxPlayers) {
+                maxPlayers = tickReq.numberOfPlayers
             }
         }
-
-        Bukkit.getServer().getScheduler().runTaskTimer(WorldPluginInterface.INSTANCE.getPlugin(), () -> {
-
-        }, 0, 1);
+        Bukkit.getServer().scheduler.runTaskTimer(plugin!!, Runnable {}, 0, 1)
     }
 
-    public GameUtils(List<ITickReq> tickRequirements, Runnable startGame, Runnable teleport) {
-        this.tickRequirements = tickRequirements;
-        this.startGame = startGame;
-        this.teleport = teleport;
-
-        for (ITickReq tickReq : tickRequirements) {
-            if (((TickReq)tickReq).getNumberOfTicks() > ticksToStart) {
-                ticksToStart = ((TickReq)tickReq).getNumberOfTicks();
+    constructor(tickRequirements: List<ITickReq>, startGame: Runnable, teleport: Runnable) {
+        this.tickRequirements = tickRequirements
+        this.startGame = startGame
+        this.teleport = teleport
+        for (tickReq in tickRequirements) {
+            if ((tickReq as TickReq).numberOfTicks > ticksToStart) {
+                ticksToStart = tickReq.numberOfTicks
             }
-
-            if (((TickReq)tickReq).getNumberOfPlayers() > maxPlayers) {
-                maxPlayers = ((TickReq)tickReq).getNumberOfPlayers();
+            if (tickReq.numberOfPlayers > maxPlayers) {
+                maxPlayers = tickReq.numberOfPlayers
             }
         }
-
-        Bukkit.getServer().getScheduler().runTaskTimer(WorldPluginInterface.INSTANCE.getPlugin(), this::tick, 0, 1);
+        Bukkit.getServer().scheduler.runTaskTimer(plugin!!, Runnable { tick() }, 0, 1)
     }
 
-    public void tick() {
+    private fun tick() {
         if (!started) {
-            preStart();
+            preStart()
         }
     }
 
-    public void preStart() {
-        Collection<? extends Player> players = Bukkit.getServer().getOnlinePlayers();
-        if (players.size() > 1) {
-            for (ITickReq tickReq : tickRequirements) {
-                if (players.size() == ((TickReq)tickReq).getNumberOfPlayers() && ticksPassed < ticksToStart - ((TickReq)tickReq).getNumberOfTicks()) {
-                    ticksPassed = ticksToStart - ((TickReq)tickReq).getNumberOfTicks();
+    private fun preStart() {
+        val players = Bukkit.getServer().onlinePlayers
+        if (players.size > 1) {
+            for (tickReq in tickRequirements) {
+                if (players.size == (tickReq as TickReq).numberOfPlayers && ticksPassed < ticksToStart - tickReq.numberOfTicks) {
+                    ticksPassed = ticksToStart - tickReq.numberOfTicks
                 }
-                if (ticksPassed == ticksToStart - ((TickReq)tickReq).getNumberOfTicks()) {
-                    String message = ChatColor.GOLD + "Game starts regardless of player count in";
-                    String time = " " + ChatColor.BLUE + ((ticksToStart - ticksPassed)/20) + "s";
-                    Bukkit.getServer().broadcastMessage(message + time);
-                    for (Player player : players) {
-                        player.playSound(player.getLocation(), Sound.BLOCK_TRIPWIRE_CLICK_ON, 1, 1);
+                if (ticksPassed == ticksToStart - tickReq.numberOfTicks) {
+                    val message = ChatColor.GOLD.toString() + "Game starts regardless of player count in"
+                    val time = " " + ChatColor.BLUE + (ticksToStart - ticksPassed) / 20 + "s"
+                    Bukkit.getServer().broadcastMessage(message + time)
+                    for (player in players) {
+                        player.playSound(player.location, Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f)
                     }
                 }
             }
-
             if (ticksPassed == ticksToStart - teleportToArenaTicks) {
-                teleport.run();
-                getReflectedAPI().setAvailable(false);
-                clearGameBox(getReflectedAPI().getLoadedMap());
-                Bukkit.getServer().getScheduler().runTaskLater(WorldPluginInterface.INSTANCE.getPlugin(), () -> {
-                    Bukkit.getServer().broadcastMessage(ChatColor.GREEN + "Go!");
-                    for (Player player : players) {
-                        player.resetTitle();
-                        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 1.5f);
+                teleport.run()
+                getReflectedAPI().setAvailable(false)
+                clearGameBox(getReflectedAPI().getLoadedMap())
+                Bukkit.getServer().scheduler.runTaskLater(plugin!!, Runnable {
+                    Bukkit.getServer().broadcastMessage(ChatColor.GREEN.toString() + "Go!")
+                    for (player in players) {
+                        player.resetTitle()
+                        player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1.5f)
                     }
-                    startGame.run();
-                    started = true;
-                }, teleportToArenaTicks);
+                    startGame.run()
+                    started = true
+                }, teleportToArenaTicks.toLong())
             }
-
             if (ticksPassed >= ticksToStart - teleportToArenaTicks && ticksPassed % 20 == 0 && ticksToStart - ticksPassed != 0) {
-                for (Player player : players) {
-                    player.sendTitle("" + ChatColor.RED + ((ticksToStart - ticksPassed)/20), "");
-                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1, 0.75f);
+                for (player in players) {
+                    player.sendTitle("" + ChatColor.RED + (ticksToStart - ticksPassed) / 20, "")
+                    player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 0.75f)
                 }
             }
-
-            ticksPassed++;
+            ticksPassed++
         } else if (ticksPassed != 0) {
-            ticksPassed = 0;
+            ticksPassed = 0
         }
     }
 
     @EventHandler
-    public void leave(PlayerQuitEvent event) {
-        if (getServer().getOnlinePlayers().size() <= 1 && started) {
-            getReflectedAPI().restart();
+    fun leave(event: PlayerQuitEvent?) {
+        if (Bukkit.getServer().onlinePlayers.size <= 1 && started) {
+            getReflectedAPI().restart()
         }
     }
 
     @EventHandler
-    public void hunger(FoodLevelChangeEvent event) {
-        event.setFoodLevel(20);
+    fun hunger(event: FoodLevelChangeEvent) {
+        event.foodLevel = 20
     }
 
     @EventHandler
-    public void playerInteract(PlayerInteractEvent event) {
+    fun playerInteract(event: PlayerInteractEvent) {
         if (!started) {
-            kickIfLobbyTP(event.getItem(), event.getPlayer());
-            event.setCancelled(true);
+            kickIfLobbyTP(event.item!!, event.player)
+            event.isCancelled = true
         }
     }
 
     @EventHandler
-    public void playerJoin(PlayerJoinEvent event) {
-        event.setJoinMessage(ChatColor.GOLD + event.getPlayer().getName() + " joined. " + ChatColor.BLUE + "(" + getServer().getOnlinePlayers().size() + "/" + maxPlayers + ")");
-        setupFreshPlayer(event.getPlayer());
+    fun playerJoin(event: PlayerJoinEvent) {
+        event.joinMessage =
+            ChatColor.GOLD.toString() + event.player.name + " joined. " + ChatColor.BLUE + "(" + Bukkit.getServer().onlinePlayers.size + "/" + maxPlayers + ")"
+        setupFreshPlayer(event.player)
     }
 
-    @Override
-    public void blockInteract(PlayerInteractEvent event) {
+    override fun blockInteract(event: PlayerInteractEvent) {
         try {
-            if (event.getClickedBlock() == null) return;
-            if (interactBlockList.contains(event.getClickedBlock().getType())) {
-                event.setCancelled(true);
+            if (event.clickedBlock == null) return
+            if (interactBlockList.contains(event.clickedBlock!!.type)) {
+                event.isCancelled = true
             }
-        } catch (Exception e) {
-            e.printStackTrace();System.out.println(e.getMessage());
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(e.message)
         }
     }
 
-    @Override
-    public void awardGems(Player player, GemAmount amount) {
-
-    }
-
-    @Override
-    public void setupFreshPlayer(Player player) {
+    override fun awardGems(player: Player, amount: GemAmount) {}
+    override fun setupFreshPlayer(player: Player) {
         try {
-            player.setGameMode(GameMode.SURVIVAL);
-            player.getInventory().clear();
-            player.teleport(new Location(getReflectedAPI().getLoadedMap(), 0, 100, 0));
-
-            player.getInventory().setItem(8, createNamedItem(Material.TNT, 1, returnToLobbyName)); //Slot 8 is the far right hotbar slot
-            player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 999999, 1, true));
-        } catch (Exception e) {
-            e.printStackTrace();System.out.println(e.getMessage());
+            player.gameMode = GameMode.SURVIVAL
+            player.inventory.clear()
+            player.teleport(Location(getReflectedAPI().getLoadedMap(), 0.0, 100.0, 0.0))
+            player.inventory.setItem(
+                8,
+                createNamedItem(Material.TNT, 1, returnToLobbyName)
+            ) //Slot 8 is the far right hotbar slot
+            player.addPotionEffect(PotionEffect(PotionEffectType.NIGHT_VISION, 999999, 1, true))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(e.message)
         }
     }
 
-    @Deprecated
-    private ItemStack createNamedItem(Material mat, int count, Component name) {
-        ItemStack item = new ItemStack(mat, count);
-        item.editMeta(it -> it.displayName(name.decoration(TextDecoration.ITALIC, false)));
-        return item;
+    @Deprecated("")
+    private fun createNamedItem(mat: Material, count: Int, name: Component): ItemStack {
+        val item = ItemStack(mat, count)
+        item.editMeta { it: ItemMeta -> it.displayName(name.decoration(TextDecoration.ITALIC, false)) }
+        return item
     }
 
-    @Override
-    public void kickIfLobbyTP(ItemStack item, Player player) {
+    override fun kickIfLobbyTP(item: ItemStack, player: Player) {
         try {
-            if (item != null && player != null && Objects.requireNonNull(item.getItemMeta().displayName()).contains(returnToLobbyName)) {
-                getReflectedAPI().sendPlayer(player, "lobby");
+            if (Objects.requireNonNull(item.itemMeta.displayName())!!
+                    .contains(returnToLobbyName)
+            ) {
+                getReflectedAPI().sendPlayer(player, "lobby")
             }
-        } catch (Exception e) {
-            e.printStackTrace();System.out.println(e.getMessage());
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(e.message)
         }
     }
 
-    @Override
-    public void winnerEffect(Player winner) {
+    override fun winnerEffect(winner: Player) {
         try {
-            winner.setGameMode(GameMode.CREATIVE);
-            winner.setFlying(true);
-            Bukkit.getServer().getScheduler().runTaskTimer(WorldPluginInterface.INSTANCE.getPlugin(), () -> {
-                Firework firework = (Firework) winner.getWorld().spawnEntity(winner.getLocation(), EntityType.FIREWORK);
-                FireworkMeta fireworkMeta = firework.getFireworkMeta();
-                fireworkMeta.setPower(1);
+            winner.gameMode = GameMode.CREATIVE
+            winner.isFlying = true
+            Bukkit.getServer().scheduler.runTaskTimer(plugin!!, Runnable {
+                val firework = winner.world.spawnEntity(winner.location, EntityType.FIREWORK) as Firework
+                val fireworkMeta = firework.fireworkMeta
+                fireworkMeta.power = 1
                 if (Math.random() > 0.5) {
-                    fireworkMeta.addEffect(FireworkEffect.builder().with(FireworkEffect.Type.STAR).flicker(true).withColor(Color.ORANGE).build());
+                    fireworkMeta.addEffect(
+                        FireworkEffect.builder().with(FireworkEffect.Type.STAR).flicker(true).withColor(
+                            Color.ORANGE
+                        ).build()
+                    )
                 } else {
-                    fireworkMeta.addEffect(FireworkEffect.builder().with(FireworkEffect.Type.CREEPER).flicker(true).withColor(Color.GREEN).build());
+                    fireworkMeta.addEffect(
+                        FireworkEffect.builder().with(FireworkEffect.Type.CREEPER).flicker(true).withColor(
+                            Color.GREEN
+                        ).build()
+                    )
                 }
-                firework.setFireworkMeta(fireworkMeta);
-            }, 0, 10);
-        } catch (Exception e) {
-            e.printStackTrace();System.out.println(e.getMessage());
+                firework.fireworkMeta = fireworkMeta
+            }, 0, 10)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(e.message)
         }
     }
 
-    @Override
-    public void deathEffect(Player player) {
+    override fun deathEffect(player: Player) {
         try {
-            if (player.getGameMode() == GameMode.SURVIVAL) {
-                player.teleport(new Location(player.getWorld(), 0, 65, 0));
-                player.setGameMode(GameMode.SPECTATOR);
-                Bukkit.getServer().broadcastMessage(ChatColor.GOLD + player.getDisplayName() + ChatColor.WHITE + " died. " + ChatColor.GOLD + "FINAL KILL");
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 8, 1);
-                player.hidePlayer(player);
+            if (player.gameMode == GameMode.SURVIVAL) {
+                player.teleport(Location(player.world, 0.0, 65.0, 0.0))
+                player.gameMode = GameMode.SPECTATOR
+                Bukkit.getServer()
+                    .broadcastMessage(ChatColor.GOLD.toString() + player.displayName + ChatColor.WHITE + " died. " + ChatColor.GOLD + "FINAL KILL")
+                player.world.playSound(player.location, Sound.ENTITY_BAT_DEATH, 8f, 1f)
+                player.hidePlayer(player)
             }
-        } catch (Exception e) {
-            e.printStackTrace();System.out.println(e.getMessage());
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(e.message)
         }
     }
 
-    @Override
-    public void deathMessage(Player player) {
+    override fun deathMessage(player: Player) {
         try {
-            if (player.getGameMode() == GameMode.SURVIVAL) {
-                Bukkit.getServer().broadcastMessage(ChatColor.GOLD + player.getDisplayName() + ChatColor.WHITE + " died.");
-                player.sendTitle(ChatColor.RED + "You died.", "");
-                Bukkit.getServer().getScheduler().runTaskLater(WorldPluginInterface.INSTANCE.getPlugin(), player::resetTitle, 20 * 2);
-                player.teleport(new Location(player.getWorld(), 0, 65, 0));
-                player.setGameMode(GameMode.SPECTATOR);
-                player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BAT_DEATH, 8, 1);
+            if (player.gameMode == GameMode.SURVIVAL) {
+                Bukkit.getServer()
+                    .broadcastMessage(ChatColor.GOLD.toString() + player.displayName + ChatColor.WHITE + " died.")
+                player.sendTitle(ChatColor.RED.toString() + "You died.", "")
+                Bukkit.getServer().scheduler.runTaskLater(plugin!!, Runnable { player.resetTitle() }, (20 * 2).toLong())
+                player.teleport(Location(player.world, 0.0, 65.0, 0.0))
+                player.gameMode = GameMode.SPECTATOR
+                player.world.playSound(player.location, Sound.ENTITY_BAT_DEATH, 8f, 1f)
             }
-        } catch (Exception e) {
-            e.printStackTrace();System.out.println(e.getMessage());
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(e.message)
         }
     }
 
-    @Override
-    public void clearGameBox(World world) {
+    override fun clearGameBox(world: World) {
         try {
-            if (world != null) {
-                for (int x = -15; x < 15; x++) {
-                    for (int y = 122; y > 96; y--) {
-                        for (int z = -15; z < 15; z++) {
-                            Block block = world.getBlockAt(x, y, z);
-                            if (block != null) {
-                                block.setType(Material.AIR);
-                            }
-                        }
-                    }
-                }
-
-                for (Item item : world.getEntitiesByClass(Item.class)) {
-                    if (item != null && item.getLocation().getY() >= 96) {
-                        item.remove();
+            for (x in -15..14) {
+                for (y in 122 downTo 97) {
+                    for (z in -15..14) {
+                        val block = world.getBlockAt(x, y, z)
+                        block.type = Material.AIR
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();System.out.println(e.getMessage());
+            for (item in world.getEntitiesByClass(Item::class.java)) {
+                if (item != null && item.location.y >= 96) {
+                    item.remove()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            println(e.message)
         }
     }
 }
-

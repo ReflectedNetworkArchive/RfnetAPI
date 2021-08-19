@@ -15,22 +15,23 @@ import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.util.Vector
 import top.cavecraft.cclib.ICCLib
 
-object CCLib : ICCLib {
-    lateinit var gameUtils: GameUtils
+object CCLib : ICCLib, JavaPlugin() {
+    private lateinit var gameUtils: GameUtils
     lateinit var scoreboardManager: ScoreboardManager
 
-    override fun enableGameFeatures(tickRequirements: MutableList<ICCLib.ITickReq>?): ICCLib.IGameUtils {
+    override fun enableGameFeatures(tickRequirements: MutableList<ICCLib.ITickReq>): ICCLib.IGameUtils {
         gameUtils = GameUtils(tickRequirements)
         return gameUtils
     }
 
     override fun enableGameFeatures(
-        tickRequirements: MutableList<ICCLib.ITickReq>?,
-        startGame: Runnable?,
-        teleport: Runnable?
+        tickRequirements: MutableList<ICCLib.ITickReq>,
+        startGame: Runnable,
+        teleport: Runnable
     ) {
         gameUtils = GameUtils(tickRequirements, startGame, teleport)
         WorldPluginInterface.plugin?.let { Bukkit.getServer().pluginManager.registerEvents(gameUtils, it) }
