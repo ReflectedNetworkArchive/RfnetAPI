@@ -6,7 +6,7 @@
 
     <groupId>com.reflectednetwork</groupId>
     <artifactId>RfnetAPI</artifactId>
-    <version>39</version>
+    <version>40</version>
     <packaging>jar</packaging>
 
     <name>RfnetAPI</name>
