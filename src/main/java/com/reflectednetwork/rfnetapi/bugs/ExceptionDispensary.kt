@@ -24,7 +24,7 @@ object ExceptionDispensary : Listener {
      * @param whilst A small string indicating where the exception was caught.
      * @return The ID of the exception
      */
-    fun report(exception: Exception, whilst: String): String {
+    fun report(exception: Throwable, whilst: String): String {
         val id = miniId()
         val report = StringBuilder()
 
@@ -61,7 +61,7 @@ object ExceptionDispensary : Listener {
         return document
     }
 
-    fun reportAndNotify(exception: Exception, whilst: String, user: Audience) {
+    fun reportAndNotify(exception: Throwable, whilst: String, user: Audience) {
         user.sendMessage(Component.text("Reporting an exception...").color(NamedTextColor.RED))
         async {
             report(exception, whilst)
