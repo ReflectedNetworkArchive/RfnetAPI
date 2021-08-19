@@ -15,11 +15,10 @@ import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.util.Vector
 import top.cavecraft.cclib.ICCLib
 
-object CCLib : ICCLib, JavaPlugin() {
+object CCLib : ICCLib {
     private lateinit var gameUtils: GameUtils
     lateinit var scoreboardManager: ScoreboardManager
 

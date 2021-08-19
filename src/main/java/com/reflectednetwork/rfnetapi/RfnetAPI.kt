@@ -139,7 +139,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             try {
                 @Suppress("DEPRECATION")
                 CCLib.onEnable(this)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 ExceptionDispensary.report(e, "loading CCLib compatibility")
             }
         } catch (e: Exception) {
