@@ -7,6 +7,9 @@ import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
 
+/**
+ * The main class for accessing the Reflected API. Please refrain from directly accessing anything else.
+ */
 class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
     val purchaseAPI = PurchaseAPI()
     val commandProvider = CommandRegistry()
@@ -50,7 +53,7 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
         try {
             return WorldPluginInterface.worldName?.let {
                 Bukkit.getWorld(it)
-            } ?: Bukkit.getWorlds()[0]
+            } ?: getReflectedAPI().getLoadedMap()
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "getting loaded map")
             throw NullPointerException("Error whilst getting loaded map. This was reported to the internal exception log.")
