@@ -6,6 +6,7 @@ import com.reflectednetwork.rfnetapi.WorldPluginInterface.plugin
 import com.reflectednetwork.rfnetapi.getReflectedAPI
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.*
 import org.bukkit.entity.EntityType
@@ -100,12 +101,42 @@ class GameUtils : IGameUtils, Listener {
                     ticksPassed = ticksToStart - tickReq.numberOfTicks
                 }
                 if (ticksPassed == ticksToStart - tickReq.numberOfTicks) {
-                    val message = ChatColor.GOLD.toString() + "Game starts regardless of player count in"
-                    val time = " " + ChatColor.BLUE + (ticksToStart - ticksPassed) / 20 + "s"
-                    Bukkit.getServer().broadcastMessage(message + time)
+//                    val message = ChatColor.GOLD.toString() + "Game starts regardless of player count in"
+//                    val time = " " + ChatColor.BLUE + (ticksToStart - ticksPassed) / 20 + "s"
+//                    Bukkit.getServer().broadcastMessage(message + time)
                     for (player in players) {
                         player.playSound(player.location, Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f)
                     }
+
+                    // ----
+                    val ticksUntilGameStart = ticksToStart - ticksPassed
+                    val timeStr = when {
+                        ticksUntilGameStart < 1200 -> {
+                            Math.floor((ticksUntilGameStart / 20f).toDouble()).toInt().toString() + " seconds"
+                        }
+                        ticksUntilGameStart % 1200 == 0 -> {
+                            Math.floor((ticksUntilGameStart / 1200f).toDouble()).toInt()
+                                .toString() + if (ticksUntilGameStart >= 2400) " minutes" else " minute"
+                        }
+                        else -> {
+                            Math.floor((ticksUntilGameStart / 1200f).toDouble()).toInt()
+                                .toString() + (if (ticksUntilGameStart >= 2400) " minutes " else " minute ") + Math.floor((ticksUntilGameStart % 1200f / 20f).toDouble())
+                                .toInt() + " seconds"
+                        }
+                    }
+                    Bukkit.getServer().broadcast(
+                        Component.text("Game starts in ")
+                            .color(TextColor.color(36, 198, 166))
+                            .append(
+                                Component.text(timeStr)
+                                    .color(TextColor.color(255, 253, 68))
+                            )
+                            .append(
+                                Component.text("!")
+                                    .color(TextColor.color(36, 198, 166))
+                            )
+                    )
+                    // ----
                 }
             }
             if (ticksPassed == ticksToStart - teleportToArenaTicks) {
@@ -135,7 +166,8 @@ class GameUtils : IGameUtils, Listener {
     }
 
     @EventHandler
-    fun leave(event: PlayerQuitEvent?) {
+    fun leave(event: PlayerQuitEvent) {
+        event.quitMessage(null)
         if (Bukkit.getServer().onlinePlayers.size <= 1 && started) {
             getReflectedAPI().restart()
         }
@@ -156,8 +188,18 @@ class GameUtils : IGameUtils, Listener {
 
     @EventHandler
     fun playerJoin(event: PlayerJoinEvent) {
-        event.joinMessage =
-            ChatColor.GOLD.toString() + event.player.name + " joined. " + ChatColor.BLUE + "(" + Bukkit.getServer().onlinePlayers.size + "/" + maxPlayers + ")"
+        event.joinMessage(
+            Component.text(event.player.name + " joined the game. ")
+                .color(TextColor.color(36, 198, 166))
+                .append(
+                    Component.text("(" + Bukkit.getOnlinePlayers().size)
+                        .color(TextColor.color(255, 253, 68))
+                )
+                .append(
+                    Component.text("/$maxPlayers)")
+                        .color(TextColor.color(255, 253, 68))
+                )
+        )
         setupFreshPlayer(event.player)
     }
 
