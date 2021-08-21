@@ -9,7 +9,6 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.*
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.Firework
 import org.bukkit.entity.Item
 import org.bukkit.entity.Player
@@ -254,27 +253,44 @@ class GameUtils : IGameUtils, Listener {
 
     override fun winnerEffect(winner: Player) {
         try {
-            winner.gameMode = GameMode.CREATIVE
             winner.isFlying = true
-            Bukkit.getServer().scheduler.runTaskTimer(plugin!!, Runnable {
-                val firework = winner.world.spawnEntity(winner.location, EntityType.FIREWORK) as Firework
-                val fireworkMeta = firework.fireworkMeta
-                fireworkMeta.power = 1
-                if (Math.random() > 0.5) {
-                    fireworkMeta.addEffect(
-                        FireworkEffect.builder().with(FireworkEffect.Type.STAR).flicker(true).withColor(
-                            Color.ORANGE
-                        ).build()
+            winner.allowFlight = true
+            plugin?.let {
+                Bukkit.getScheduler().runTaskTimer(it, Runnable {
+                    val firework = Objects.requireNonNull(winner)?.let {
+                        Objects.requireNonNull(winner)?.world?.spawn(
+                            it.location,
+                            Firework::class.java
+                        )
+                    }
+                    val fireworkMeta = firework?.fireworkMeta
+                    fireworkMeta?.addEffect(
+                        FireworkEffect.builder().with(FireworkEffect.Type.STAR).withColor(Color.fromRGB(36, 198, 166))
+                            .build()
                     )
-                } else {
-                    fireworkMeta.addEffect(
-                        FireworkEffect.builder().with(FireworkEffect.Type.CREEPER).flicker(true).withColor(
-                            Color.GREEN
-                        ).build()
+                    if (firework != null) {
+                        if (fireworkMeta != null) {
+                            firework.fireworkMeta = fireworkMeta
+                        }
+                    }
+                }, 0, 40)
+            }
+            Bukkit.getScheduler().runTaskTimer(plugin!!, Runnable {
+                val firework2 = Objects.requireNonNull(winner)?.let {
+                    Objects.requireNonNull(winner)?.world?.spawn(
+                        it.location,
+                        Firework::class.java
                     )
                 }
-                firework.fireworkMeta = fireworkMeta
-            }, 0, 10)
+                val fireworkMeta2 = firework2?.fireworkMeta
+                fireworkMeta2?.addEffect(
+                    FireworkEffect.builder().with(FireworkEffect.Type.STAR).withColor(Color.fromRGB(255, 253, 68))
+                        .build()
+                )
+                if (fireworkMeta2 != null) {
+                    firework2.fireworkMeta = fireworkMeta2
+                }
+            }, 20, 40)
         } catch (e: Exception) {
             e.printStackTrace()
             println(e.message)
