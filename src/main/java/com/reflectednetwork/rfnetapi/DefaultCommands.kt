@@ -43,7 +43,7 @@ object DefaultCommands {
                             executor.sendMessage(Component.text("That server is protected.").color(NamedTextColor.RED))
                         }
                     } else if (arguments.getString(0) == "dev") {
-                        if (executor.hasPermission("rfnet.developer")) {
+                        if (executor.hasPermission("rfnet.server.dev")) {
                             getReflectedAPI().sendPlayer(executor, "dev")
                         } else {
                             executor.sendMessage(Component.text("That server is protected.").color(NamedTextColor.RED))
