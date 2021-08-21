@@ -2,13 +2,16 @@
 
 package com.reflectednetwork.rfnetapi.cclibcompat
 
+import com.reflectednetwork.rfnetapi.ReflectedAPI
 import com.reflectednetwork.rfnetapi.WorldPluginInterface.plugin
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.getReflectedAPI
+import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.*
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.Firework
 import org.bukkit.entity.Item
 import org.bukkit.entity.Player
@@ -41,6 +44,7 @@ class GameUtils : IGameUtils, Listener {
     private var startGame: Runnable
     private var teleport: Runnable
     private var started = false
+    var awardedwinner = false
     private val interactBlockList = listOf(
         Material.ACACIA_DOOR,
         Material.BIRCH_DOOR,
@@ -100,16 +104,50 @@ class GameUtils : IGameUtils, Listener {
                     ticksPassed = ticksToStart - tickReq.numberOfTicks
                 }
                 if (ticksPassed == ticksToStart - tickReq.numberOfTicks) {
-                    val message = ChatColor.GOLD.toString() + "Game starts regardless of player count in"
-                    val time = " " + ChatColor.BLUE + (ticksToStart - ticksPassed) / 20 + "s"
-                    Bukkit.getServer().broadcastMessage(message + time)
+//                    val message = ChatColor.GOLD.toString() + "Game starts regardless of player count in"
+//                    val time = " " + ChatColor.BLUE + (ticksToStart - ticksPassed) / 20 + "s"
+//                    Bukkit.getServer().broadcastMessage(message + time)
                     for (player in players) {
                         player.playSound(player.location, Sound.BLOCK_TRIPWIRE_CLICK_ON, 1f, 1f)
                     }
+
+                    // ----
+                    val ticksUntilGameStart = ticksToStart - ticksPassed
+                    val timeStr = when {
+                        ticksUntilGameStart < 1200 -> {
+                            Math.floor((ticksUntilGameStart / 20f).toDouble()).toInt().toString() + " seconds"
+                        }
+                        ticksUntilGameStart % 1200 == 0 -> {
+                            Math.floor((ticksUntilGameStart / 1200f).toDouble()).toInt()
+                                .toString() + if (ticksUntilGameStart >= 2400) " minutes" else " minute"
+                        }
+                        else -> {
+                            Math.floor((ticksUntilGameStart / 1200f).toDouble()).toInt()
+                                .toString() + (if (ticksUntilGameStart >= 2400) " minutes " else " minute ") + Math.floor((ticksUntilGameStart % 1200f / 20f).toDouble())
+                                .toInt() + " seconds"
+                        }
+                    }
+                    Bukkit.getServer().broadcast(
+                        Component.text("Game starts in ")
+                            .color(TextColor.color(36, 198, 166))
+                            .append(
+                                Component.text(timeStr)
+                                    .color(TextColor.color(255, 253, 68))
+                            )
+                            .append(
+                                Component.text("!")
+                                    .color(TextColor.color(36, 198, 166))
+                            )
+                    )
+                    // ----
                 }
             }
             if (ticksPassed == ticksToStart - teleportToArenaTicks) {
-                teleport.run()
+                try {
+                    teleport.run()
+                } catch (e: Throwable) {
+                    ExceptionDispensary.report(e, "running teleport (CCLib)")
+                }
                 getReflectedAPI().setAvailable(false)
                 clearGameBox(getReflectedAPI().getLoadedMap())
                 Bukkit.getServer().scheduler.runTaskLater(plugin!!, Runnable {
@@ -118,7 +156,11 @@ class GameUtils : IGameUtils, Listener {
                         player.resetTitle()
                         player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1.5f)
                     }
-                    startGame.run()
+                    try {
+                        startGame.run()
+                    } catch (e: Throwable) {
+                        ExceptionDispensary.report(e, "running startGame (CCLib)")
+                    }
                     started = true
                 }, teleportToArenaTicks.toLong())
             }
@@ -135,7 +177,8 @@ class GameUtils : IGameUtils, Listener {
     }
 
     @EventHandler
-    fun leave(event: PlayerQuitEvent?) {
+    fun leave(event: PlayerQuitEvent) {
+        event.quitMessage(null)
         if (Bukkit.getServer().onlinePlayers.size <= 1 && started) {
             getReflectedAPI().restart()
         }
@@ -156,8 +199,18 @@ class GameUtils : IGameUtils, Listener {
 
     @EventHandler
     fun playerJoin(event: PlayerJoinEvent) {
-        event.joinMessage =
-            ChatColor.GOLD.toString() + event.player.name + " joined. " + ChatColor.BLUE + "(" + Bukkit.getServer().onlinePlayers.size + "/" + maxPlayers + ")"
+        event.joinMessage(
+            Component.text(event.player.name + " joined the game. ")
+                .color(TextColor.color(36, 198, 166))
+                .append(
+                    Component.text("(" + Bukkit.getOnlinePlayers().size)
+                        .color(TextColor.color(255, 253, 68))
+                )
+                .append(
+                    Component.text("/$maxPlayers)")
+                        .color(TextColor.color(255, 253, 68))
+                )
+        )
         setupFreshPlayer(event.player)
     }
 
@@ -211,30 +264,53 @@ class GameUtils : IGameUtils, Listener {
     }
 
     override fun winnerEffect(winner: Player) {
+        if (awardedwinner) return
+        awardedwinner = true
+
+        MedallionAPI.increaseStat(winner, "wins-${plugin?.serverConfig?.archetype}", "${plugin?.serverConfig?.archetype?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} Win")
+
         try {
-            winner.gameMode = GameMode.CREATIVE
             winner.isFlying = true
-            Bukkit.getServer().scheduler.runTaskTimer(plugin!!, Runnable {
-                val firework = winner.world.spawnEntity(winner.location, EntityType.FIREWORK) as Firework
-                val fireworkMeta = firework.fireworkMeta
-                fireworkMeta.power = 1
-                if (Math.random() > 0.5) {
-                    fireworkMeta.addEffect(
-                        FireworkEffect.builder().with(FireworkEffect.Type.STAR).flicker(true).withColor(
-                            Color.ORANGE
-                        ).build()
+            winner.allowFlight = true
+            plugin?.let {
+                Bukkit.getScheduler().runTaskTimer(it, Runnable {
+                    val firework = Objects.requireNonNull(winner)?.let {
+                        Objects.requireNonNull(winner)?.world?.spawn(
+                            it.location,
+                            Firework::class.java
+                        )
+                    }
+                    val fireworkMeta = firework?.fireworkMeta
+                    fireworkMeta?.addEffect(
+                        FireworkEffect.builder().with(FireworkEffect.Type.STAR).withColor(Color.fromRGB(36, 198, 166))
+                            .build()
                     )
-                } else {
-                    fireworkMeta.addEffect(
-                        FireworkEffect.builder().with(FireworkEffect.Type.CREEPER).flicker(true).withColor(
-                            Color.GREEN
-                        ).build()
+                    if (firework != null) {
+                        if (fireworkMeta != null) {
+                            firework.fireworkMeta = fireworkMeta
+                        }
+                    }
+                }, 0, 40)
+            }
+            Bukkit.getScheduler().runTaskTimer(plugin!!, Runnable {
+                val firework2 = Objects.requireNonNull(winner)?.let {
+                    Objects.requireNonNull(winner)?.world?.spawn(
+                        it.location,
+                        Firework::class.java
                     )
                 }
-                firework.fireworkMeta = fireworkMeta
-            }, 0, 10)
-        } catch (e: Exception) {
-            e.printStackTrace()
+                val fireworkMeta2 = firework2?.fireworkMeta
+                fireworkMeta2?.addEffect(
+                    FireworkEffect.builder().with(FireworkEffect.Type.STAR).withColor(Color.fromRGB(255, 253, 68))
+                        .build()
+                )
+                if (fireworkMeta2 != null) {
+                    firework2.fireworkMeta = fireworkMeta2
+                }
+            }, 20, 40)
+            Bukkit.getScheduler().runTaskLater(plugin!!, Runnable { ReflectedAPI.get().restart() }, 200)
+        } catch (e: Throwable) {
+            ExceptionDispensary.report(e, "creating winner effect")
             println(e.message)
         }
     }

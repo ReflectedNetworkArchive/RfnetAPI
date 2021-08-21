@@ -2,8 +2,7 @@
 
 package com.reflectednetwork.rfnetapi.cclibcompat
 
-import com.reflectednetwork.rfnetapi.RfnetAPI
-import com.reflectednetwork.rfnetapi.WorldPluginInterface
+import com.reflectednetwork.rfnetapi.WorldPluginInterface.plugin
 import com.reflectednetwork.rfnetapi.cclibcompat.scoreboard.ChildScoreboard
 import com.reflectednetwork.rfnetapi.cclibcompat.scoreboard.ScoreboardManager
 import com.reflectednetwork.rfnetapi.getReflectedAPI
@@ -23,6 +22,10 @@ object CCLib : ICCLib {
     lateinit var scoreboardManager: ScoreboardManager
 
     override fun enableGameFeatures(tickRequirements: MutableList<ICCLib.ITickReq>): ICCLib.IGameUtils {
+        if (!this::scoreboardManager.isInitialized) {
+            scoreboardManager = ScoreboardManager()
+            plugin?.let { Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, it) }
+        }
         gameUtils = GameUtils(tickRequirements)
         return gameUtils
     }
@@ -32,11 +35,21 @@ object CCLib : ICCLib {
         startGame: Runnable,
         teleport: Runnable
     ) {
+        if (!this::scoreboardManager.isInitialized) {
+            println("WARNNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
+            scoreboardManager = ScoreboardManager()
+            plugin?.let { Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, it) }
+        }
         gameUtils = GameUtils(tickRequirements, startGame, teleport)
-        WorldPluginInterface.plugin?.let { Bukkit.getServer().pluginManager.registerEvents(gameUtils, it) }
+        plugin?.let { Bukkit.getServer().pluginManager.registerEvents(gameUtils, it) }
     }
 
     override fun getGameUtils(): ICCLib.IGameUtils {
+        if (!this::scoreboardManager.isInitialized) {
+            println("WARNNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
+            scoreboardManager = ScoreboardManager()
+            plugin?.let { Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, it) }
+        }
         return gameUtils
     }
 
@@ -52,11 +65,6 @@ object CCLib : ICCLib {
         return item
     }
 
-    fun onEnable(plugin: RfnetAPI) {
-        scoreboardManager = ScoreboardManager()
-        Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, plugin)
-    }
-
     override fun offset(original: Location, xoff: Double, yoff: Double, zoff: Double): Location {
         return original.clone().add(Vector(xoff, yoff, zoff))
     }
@@ -66,11 +74,17 @@ object CCLib : ICCLib {
     }
 
     override fun restartServer() {
-        getReflectedAPI().restart()
+        if (!(this::gameUtils.isInitialized && gameUtils.awardedwinner)) {
+            getReflectedAPI().restart()
+        }
     }
 
     override fun getScoreboardManager(): ICCLib.IScoreboardManager {
-        println("WARNNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
+        if (!this::scoreboardManager.isInitialized) {
+            println("WARNNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
+            scoreboardManager = ScoreboardManager()
+            plugin?.let { Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, it) }
+        }
         scoreboardManager.enableCompat()
         return scoreboardManager
     }
