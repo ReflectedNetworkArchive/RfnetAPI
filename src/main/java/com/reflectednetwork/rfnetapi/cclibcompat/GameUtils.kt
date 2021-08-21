@@ -6,6 +6,7 @@ import com.reflectednetwork.rfnetapi.ReflectedAPI
 import com.reflectednetwork.rfnetapi.WorldPluginInterface.plugin
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.getReflectedAPI
+import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
@@ -265,6 +266,9 @@ class GameUtils : IGameUtils, Listener {
     override fun winnerEffect(winner: Player) {
         if (awardedwinner) return
         awardedwinner = true
+
+        MedallionAPI.increaseStat(winner, "wins-${plugin?.serverConfig?.archetype}", "${plugin?.serverConfig?.archetype?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} Win")
+
         try {
             winner.isFlying = true
             winner.allowFlight = true
