@@ -3,7 +3,6 @@ package com.reflectednetwork.rfnetapi
 import com.google.common.io.ByteStreams
 import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
-import com.reflectednetwork.rfnetapi.cclibcompat.CCLib
 import com.reflectednetwork.rfnetapi.loginstreaks.LoginStreakEvents
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.reflectednetwork.rfnetapi.modtools.ModCommands
@@ -134,14 +133,6 @@ class RfnetAPI : JavaPlugin(), Listener {
 
             // Stats
             Metrics(this, 12072)
-
-            // Enable backwards compatibility
-            try {
-                @Suppress("DEPRECATION")
-                CCLib.onEnable(this)
-            } catch (e: Throwable) {
-                ExceptionDispensary.report(e, "loading CCLib compatibility")
-            }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "enabling plugin")
         }
