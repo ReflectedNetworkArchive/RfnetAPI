@@ -2,7 +2,9 @@
 
 package com.reflectednetwork.rfnetapi.cclibcompat
 
+import com.reflectednetwork.rfnetapi.ReflectedAPI
 import com.reflectednetwork.rfnetapi.WorldPluginInterface.plugin
+import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.getReflectedAPI
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
@@ -41,6 +43,7 @@ class GameUtils : IGameUtils, Listener {
     private var startGame: Runnable
     private var teleport: Runnable
     private var started = false
+    var awardedwinner = false
     private val interactBlockList = listOf(
         Material.ACACIA_DOOR,
         Material.BIRCH_DOOR,
@@ -139,7 +142,11 @@ class GameUtils : IGameUtils, Listener {
                 }
             }
             if (ticksPassed == ticksToStart - teleportToArenaTicks) {
-                teleport.run()
+                try {
+                    teleport.run()
+                } catch (e: Throwable) {
+                    ExceptionDispensary.report(e, "running teleport (CCLib)")
+                }
                 getReflectedAPI().setAvailable(false)
                 clearGameBox(getReflectedAPI().getLoadedMap())
                 Bukkit.getServer().scheduler.runTaskLater(plugin!!, Runnable {
@@ -148,7 +155,11 @@ class GameUtils : IGameUtils, Listener {
                         player.resetTitle()
                         player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 1f, 1.5f)
                     }
-                    startGame.run()
+                    try {
+                        startGame.run()
+                    } catch (e: Throwable) {
+                        ExceptionDispensary.report(e, "running startGame (CCLib)")
+                    }
                     started = true
                 }, teleportToArenaTicks.toLong())
             }
@@ -252,6 +263,8 @@ class GameUtils : IGameUtils, Listener {
     }
 
     override fun winnerEffect(winner: Player) {
+        if (awardedwinner) return
+        awardedwinner = true
         try {
             winner.isFlying = true
             winner.allowFlight = true
@@ -291,8 +304,9 @@ class GameUtils : IGameUtils, Listener {
                     firework2.fireworkMeta = fireworkMeta2
                 }
             }, 20, 40)
-        } catch (e: Exception) {
-            e.printStackTrace()
+            Bukkit.getScheduler().runTaskLater(plugin!!, Runnable { ReflectedAPI.get().restart() }, 200)
+        } catch (e: Throwable) {
+            ExceptionDispensary.report(e, "creating winner effect")
             println(e.message)
         }
     }

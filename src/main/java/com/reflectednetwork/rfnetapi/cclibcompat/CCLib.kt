@@ -66,7 +66,9 @@ object CCLib : ICCLib {
     }
 
     override fun restartServer() {
-        getReflectedAPI().restart()
+        if (!(this::gameUtils.isInitialized && gameUtils.awardedwinner)) {
+            getReflectedAPI().restart()
+        }
     }
 
     override fun getScoreboardManager(): ICCLib.IScoreboardManager {
