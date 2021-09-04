@@ -1,5 +1,6 @@
 package com.reflectednetwork.rfnetapi
 import com.google.common.io.ByteStreams
+import com.google.gson.JsonObject
 import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
@@ -9,6 +10,10 @@ import com.reflectednetwork.rfnetapi.permissions.PermissionAPI
 import com.reflectednetwork.rfnetapi.permissions.PermissionCommands
 import com.reflectednetwork.rfnetapi.purchases.PurchaseEvents
 import com.reflectednetwork.rfnetapi.purchases.PurchaseGUI
+import io.ktor.client.*
+import io.ktor.client.features.json.*
+import io.ktor.client.request.*
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
@@ -152,7 +157,7 @@ class RfnetAPI : JavaPlugin(), Listener {
                 // so we don't overload them.
                 database.close()
                 // and then update the server
-                update()
+                runBlocking { update() }
             }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "disabling plugin")
@@ -190,7 +195,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             database.close()
 
             // And then update the server
-            update()
+            runBlocking { update() }
 
             // Wait one second so players don't get Server Closed before being sent back to lobby
             Bukkit.getScheduler().runTaskLater(this, Runnable {
@@ -235,7 +240,7 @@ class RfnetAPI : JavaPlugin(), Listener {
         }
     }
 
-    private fun update() {
+    private suspend fun update() {
         try {
             println("UPDATING > API")
             // Check for updates
@@ -286,7 +291,28 @@ class RfnetAPI : JavaPlugin(), Listener {
             download("https://www.dropbox.com/s/v569132ztwnfqbr/CCLib-1.0-SNAPSHOT.jar?dl=1", "CCLib-1.0-SNAPSHOT")
 
             println("UPDATING > Core")
-            download("https://chew.pw/mc/jars/paper/1.17.1", File("./paper_1.17.1.jar"))
+            val paperjar = File("./paper_1.17.1.jar")
+            val client = HttpClient() {
+                install(JsonFeature) {
+                    serializer = GsonSerializer()
+                }
+            }
+
+            val versionResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1")
+            val latest = versionResponse.getAsJsonArray("builds").maxOf { it.asInt }
+
+            val buildResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest")
+            val latestChecksum =
+                buildResponse
+                    .getAsJsonObject("downloads")
+                    .getAsJsonObject("application")
+                    .get("sha256")
+                    .asString
+
+            if (sha256(paperjar) != latestChecksum) {
+                println("Checksum doesn't match latest, downloading to verify.")
+                download("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest/downloads/paper-1.17.1-$latest.jar", paperjar, false)
+            }
 
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
