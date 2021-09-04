@@ -1,5 +1,4 @@
 package com.reflectednetwork.rfnetapi
-
 import com.google.common.io.ByteStreams
 import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
@@ -50,6 +49,9 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onEnable() {
         try {
+            // Init the API and let any waiting plugins know that it's ready now.
+            api = ReflectedAPI(this)
+
             if (updateCheck()) {
                 async {
                     logger.log(Level.SEVERE, "Plugin or dependencies out of date! Will restart server shortly.")
@@ -63,9 +65,6 @@ class RfnetAPI : JavaPlugin(), Listener {
                 GhostModeManager.enable(this)
                 return
             }
-
-            // Init the API and let any waiting plugins know that it's ready now.
-            api = ReflectedAPI(this)
 
             // Because of really dumb dependency issues, we've gotta do this
             WorldPluginInterface.plugin = this
@@ -145,13 +144,15 @@ class RfnetAPI : JavaPlugin(), Listener {
             }
 
             if (!disabledForUpdate) {
-                update()
+
                 // Remove this server from the list of ones that are connectable
                 database.setAvailable(false)
                 database.updatePlayerCount(0)
-                // And then close the connections to the database
+                // Close the connections to the database
                 // so we don't overload them.
                 database.close()
+                // and then update the server
+                update()
             }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "disabling plugin")
@@ -183,11 +184,13 @@ class RfnetAPI : JavaPlugin(), Listener {
             for (player in Bukkit.getOnlinePlayers()) {
                 sendPlayer(player, serverConfig.archetype)
             }
-            update()
 
-            // And then close the connections to the database
+            // Close the connections to the database
             // so we don't overload them.
             database.close()
+
+            // And then update the server
+            update()
 
             // Wait one second so players don't get Server Closed before being sent back to lobby
             Bukkit.getScheduler().runTaskLater(this, Runnable {
@@ -283,14 +286,14 @@ class RfnetAPI : JavaPlugin(), Listener {
             download("https://www.dropbox.com/s/v569132ztwnfqbr/CCLib-1.0-SNAPSHOT.jar?dl=1", "CCLib-1.0-SNAPSHOT")
 
             println("UPDATING > Core")
-            download("https://chew.pw/mc/jars/paper/1.17.1", File("", "paper_1.17.1.jar"))
+            download("https://chew.pw/mc/jars/paper/1.17.1", File("./paper_1.17.1.jar"))
 
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
         }
     }
 
-    fun getSpaceConnection(): URLConnection {
+    private fun getSpaceConnection(): URLConnection {
         val basicAuthenticationEncoded =
             Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
         val url =

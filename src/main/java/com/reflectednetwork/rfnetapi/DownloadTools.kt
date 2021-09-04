@@ -5,34 +5,35 @@ import org.apache.commons.io.IOUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
-import java.nio.charset.Charset
 import java.security.MessageDigest
 
-fun md5(input: String) = hashString("MD5", input)
+fun md5(input: ByteArray) = hashString("MD5", input)
 
-private fun hashString(type: String, input: String): String {
+private fun hashString(type: String, input: ByteArray): String {
     val bytes = MessageDigest
         .getInstance(type)
-        .digest(input.toByteArray())
+        .digest(input)
     return DatatypeConverter.printHexBinary(bytes).uppercase()
 }
 
 fun download(urlString: String, file: File) {
-    var downloadMsg = "Downloading file:"
-    val downloadStream = FileOutputStream(file)
+    var downloadMsg = "Downloading"
     val url = URL(urlString)
     val urlConnection = url.openConnection()
 
-    val existingFileHash = md5(file.readText(Charset.defaultCharset()))
-    val downloadedFileHash = md5(urlConnection.getInputStream().readAllBytes().contentToString())
+    val bytes = urlConnection.getInputStream().readAllBytes()
+
+    val existingFileHash = md5(file.readBytes())
+    val downloadedFileHash = md5(bytes.clone())
     if (file.exists() && existingFileHash != downloadedFileHash) {
-        file.delete()
-        downloadMsg = "Refreshing corrupt file:"
+        downloadMsg = "Re-downloading"
+        println("Hash check failed: $existingFileHash != $downloadedFileHash")
     }
 
-    if (!file.exists()) {
+    if (!file.exists() || existingFileHash != downloadedFileHash) {
         println("--> $downloadMsg ${file.name}")
-        IOUtils.copy(urlConnection.getInputStream(), downloadStream)
+        val downloadStream = FileOutputStream(file)
+        IOUtils.copy(bytes.clone().inputStream(), downloadStream)
     }
 }
 
