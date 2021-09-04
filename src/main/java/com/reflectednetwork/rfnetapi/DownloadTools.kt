@@ -7,18 +7,18 @@ import java.io.FileOutputStream
 import java.net.URL
 import java.security.MessageDigest
 
-fun sha256(input: File) = sha256(input.readBytes())
-fun sha256(input: ByteArray) = hashString("SHA256", input)
+fun sha256(input: File?) = sha256(input?.readBytes())
+fun sha256(input: ByteArray?) = hashString("SHA256", input)
 
-private fun hashString(type: String, input: ByteArray): String {
+private fun hashString(type: String, input: ByteArray?): String {
     val bytes = MessageDigest
         .getInstance(type)
-        .digest(input)
+        .digest(input ?: ByteArray(0))
     return DatatypeConverter.printHexBinary(bytes).lowercase()
 }
 
 fun download(urlString: String, file: File, ignoreHash: Boolean) {
-    if (ignoreHash && file.exists() && file.readBytes().isNotEmpty()) return
+    if (ignoreHash && file.exists()) return
 
     var downloadMsg = "Downloading"
     val url = URL(urlString)
@@ -26,7 +26,7 @@ fun download(urlString: String, file: File, ignoreHash: Boolean) {
 
     val bytes = urlConnection.getInputStream().readAllBytes()
 
-    val existingFileHash = sha256(file)
+    val existingFileHash = sha256(if (file.exists()) file else null)
     val downloadedFileHash = sha256(bytes.clone())
     if (file.exists() && existingFileHash != downloadedFileHash) {
         downloadMsg = "Re-downloading"
