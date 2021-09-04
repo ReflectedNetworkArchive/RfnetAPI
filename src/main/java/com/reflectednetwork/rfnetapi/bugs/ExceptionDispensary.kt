@@ -133,4 +133,6 @@ object ExceptionDispensary : Listener {
         }
         return builder.toString()
     }
+
+    fun report(exception: Exception, whilst: String): String = report(exception as Throwable, whilst) // compat
 }
