@@ -3,7 +3,6 @@ package com.reflectednetwork.rfnetapi
 import com.google.common.io.ByteStreams
 import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
-import com.reflectednetwork.rfnetapi.loginstreaks.LoginStreakEvents
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.reflectednetwork.rfnetapi.modtools.ModCommands
 import com.reflectednetwork.rfnetapi.modtools.ModEvents
@@ -22,6 +21,7 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
+import java.net.URLConnection
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -97,7 +97,6 @@ class RfnetAPI : JavaPlugin(), Listener {
             server.pluginManager.registerEvents(JoinEventWorkaround, this)
             server.pluginManager.registerEvents(PlayerCountEvents, this)
             server.pluginManager.registerEvents(ModEvents, this)
-            server.pluginManager.registerEvents(LoginStreakEvents, this)
             server.pluginManager.registerEvents(permissionAPI, this)
 
             // Check online receipts on occasion.
@@ -223,13 +222,7 @@ class RfnetAPI : JavaPlugin(), Listener {
         }
 
         return try {
-            val basicAuthenticationEncoded =
-                Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
-            val url =
-                URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
-            val urlConnection = url.openConnection()
-            urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
-            urlConnection.getInputStream().readAllBytes()
+            getSpaceConnection().getInputStream().readAllBytes()
             true
         }  catch (e: FileNotFoundException) {
             false
@@ -241,32 +234,23 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     private fun update() {
         try {
-            println("Checking for updates...")
+            println("UPDATING > API")
             // Check for updates
             val pluginUpdateFile = File("./plugins/RfnetAPI-$nextVer.jar")
             try {
                 val downloadStream = FileOutputStream(pluginUpdateFile)
-                val basicAuthenticationEncoded =
-                    Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
-                val url =
-                    URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
-                val urlConnection = url.openConnection()
-                urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
-                IOUtils.copy(urlConnection.getInputStream(), downloadStream)
+                IOUtils.copy(getSpaceConnection().getInputStream(), downloadStream)
                 File("./plugins/RfnetAPI-$ver.jar").deleteOnExit()
-                println("Update complete!")
+                println("--> Plugin updated")
             }  catch (e: FileNotFoundException) {
-                println("No update found!")
                 pluginUpdateFile.delete()
             } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
                 if (e.message?.contains("404") != true) throw e
-                println("No update found!")
                 pluginUpdateFile.delete()
             }
 
+            println("UPDATING > Configuration")
             if (!server.allowFlight || server.onlineMode) {
-                println("Applying configuration updates...")
-
                 val properties = Files.lines(Paths.get("server.properties"))
                 val newProperties = File("server.properties~").outputStream()
 
@@ -290,37 +274,29 @@ class RfnetAPI : JavaPlugin(), Listener {
                     Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
                 })
 
-                val themisFolder = File("./plugins/Themis")
-                val themisJar = File("./plugins/Themis_0.9.0.jar")
-                val protocolLibFolder = File("./plugins/ProtocolLib")
-                val protocolLibJar = File("./plugins/ProtocolLib.jar")
-                if (themisJar.exists()) {
-                    protocolLibJar.deleteOnExit()
-                    themisJar.deleteOnExit()
-                    Runtime.getRuntime().addShutdownHook(Thread {
-                        protocolLibFolder.deleteRecursively()
-                        themisFolder.deleteRecursively()
-                    })
-                }
+                println("--> Configuration updates applied")
             }
 
-            println("Checking dependencies...")
+            println("UPDATING > Dependencies")
             download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
             download("https://www.dropbox.com/s/od0syes7xubidh3/RFNETAPI_WorldLoader-1.jar?dl=1", "RFNETAPI_WorldLoader-1")
             download("https://www.dropbox.com/s/v569132ztwnfqbr/CCLib-1.0-SNAPSHOT.jar?dl=1", "CCLib-1.0-SNAPSHOT")
+
+            println("UPDATING > Core")
+            download("https://chew.pw/mc/jars/paper/1.17.1", File("", "paper_1.17.1.jar"))
+
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
         }
     }
 
-    fun download(urlString: String, pluginName: String) {
-        val download = File("./plugins/$pluginName.jar")
-        if (!download.exists()) {
-            println("Downloading $pluginName.jar")
-            val downloadStream = FileOutputStream(download)
-            val url = URL(urlString)
-            val urlConnection = url.openConnection()
-            IOUtils.copy(urlConnection.getInputStream(), downloadStream)
-        }
+    fun getSpaceConnection(): URLConnection {
+        val basicAuthenticationEncoded =
+            Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
+        val url =
+            URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
+        val urlConnection = url.openConnection()
+        urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
+        return urlConnection
     }
 }
