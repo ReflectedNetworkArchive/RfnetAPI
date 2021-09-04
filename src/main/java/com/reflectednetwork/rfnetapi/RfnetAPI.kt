@@ -1,9 +1,8 @@
 package com.reflectednetwork.rfnetapi
-
 import com.google.common.io.ByteStreams
+import com.google.gson.JsonObject
 import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
-import com.reflectednetwork.rfnetapi.loginstreaks.LoginStreakEvents
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.reflectednetwork.rfnetapi.modtools.ModCommands
 import com.reflectednetwork.rfnetapi.modtools.ModEvents
@@ -11,6 +10,10 @@ import com.reflectednetwork.rfnetapi.permissions.PermissionAPI
 import com.reflectednetwork.rfnetapi.permissions.PermissionCommands
 import com.reflectednetwork.rfnetapi.purchases.PurchaseEvents
 import com.reflectednetwork.rfnetapi.purchases.PurchaseGUI
+import io.ktor.client.*
+import io.ktor.client.features.json.*
+import io.ktor.client.request.*
+import kotlinx.coroutines.runBlocking
 import org.apache.commons.io.IOUtils
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
@@ -22,6 +25,7 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
+import java.net.URLConnection
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
@@ -50,6 +54,9 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     override fun onEnable() {
         try {
+            // Init the API and let any waiting plugins know that it's ready now.
+            api = ReflectedAPI(this)
+
             if (updateCheck()) {
                 async {
                     logger.log(Level.SEVERE, "Plugin or dependencies out of date! Will restart server shortly.")
@@ -63,9 +70,6 @@ class RfnetAPI : JavaPlugin(), Listener {
                 GhostModeManager.enable(this)
                 return
             }
-
-            // Init the API and let any waiting plugins know that it's ready now.
-            api = ReflectedAPI(this)
 
             // Because of really dumb dependency issues, we've gotta do this
             WorldPluginInterface.plugin = this
@@ -97,7 +101,6 @@ class RfnetAPI : JavaPlugin(), Listener {
             server.pluginManager.registerEvents(JoinEventWorkaround, this)
             server.pluginManager.registerEvents(PlayerCountEvents, this)
             server.pluginManager.registerEvents(ModEvents, this)
-            server.pluginManager.registerEvents(LoginStreakEvents, this)
             server.pluginManager.registerEvents(permissionAPI, this)
 
             // Check online receipts on occasion.
@@ -146,13 +149,15 @@ class RfnetAPI : JavaPlugin(), Listener {
             }
 
             if (!disabledForUpdate) {
-                update()
+
                 // Remove this server from the list of ones that are connectable
                 database.setAvailable(false)
                 database.updatePlayerCount(0)
-                // And then close the connections to the database
+                // Close the connections to the database
                 // so we don't overload them.
                 database.close()
+                // and then update the server
+                runBlocking { update() }
             }
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "disabling plugin")
@@ -184,11 +189,13 @@ class RfnetAPI : JavaPlugin(), Listener {
             for (player in Bukkit.getOnlinePlayers()) {
                 sendPlayer(player, serverConfig.archetype)
             }
-            update()
 
-            // And then close the connections to the database
+            // Close the connections to the database
             // so we don't overload them.
             database.close()
+
+            // And then update the server
+            runBlocking { update() }
 
             // Wait one second so players don't get Server Closed before being sent back to lobby
             Bukkit.getScheduler().runTaskLater(this, Runnable {
@@ -223,13 +230,7 @@ class RfnetAPI : JavaPlugin(), Listener {
         }
 
         return try {
-            val basicAuthenticationEncoded =
-                Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
-            val url =
-                URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
-            val urlConnection = url.openConnection()
-            urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
-            urlConnection.getInputStream().readAllBytes()
+            getSpaceConnection().getInputStream().readAllBytes()
             true
         }  catch (e: FileNotFoundException) {
             false
@@ -239,34 +240,25 @@ class RfnetAPI : JavaPlugin(), Listener {
         }
     }
 
-    private fun update() {
+    private suspend fun update() {
         try {
-            println("Checking for updates...")
+            println("UPDATING > API")
             // Check for updates
             val pluginUpdateFile = File("./plugins/RfnetAPI-$nextVer.jar")
             try {
                 val downloadStream = FileOutputStream(pluginUpdateFile)
-                val basicAuthenticationEncoded =
-                    Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
-                val url =
-                    URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
-                val urlConnection = url.openConnection()
-                urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
-                IOUtils.copy(urlConnection.getInputStream(), downloadStream)
+                IOUtils.copy(getSpaceConnection().getInputStream(), downloadStream)
                 File("./plugins/RfnetAPI-$ver.jar").deleteOnExit()
-                println("Update complete!")
+                println("--> Plugin updated")
             }  catch (e: FileNotFoundException) {
-                println("No update found!")
                 pluginUpdateFile.delete()
             } catch (e: IOException) { // We got a 404 meaning the file doesn't exist
                 if (e.message?.contains("404") != true) throw e
-                println("No update found!")
                 pluginUpdateFile.delete()
             }
 
+            println("UPDATING > Configuration")
             if (!server.allowFlight || server.onlineMode) {
-                println("Applying configuration updates...")
-
                 val properties = Files.lines(Paths.get("server.properties"))
                 val newProperties = File("server.properties~").outputStream()
 
@@ -290,37 +282,50 @@ class RfnetAPI : JavaPlugin(), Listener {
                     Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
                 })
 
-                val themisFolder = File("./plugins/Themis")
-                val themisJar = File("./plugins/Themis_0.9.0.jar")
-                val protocolLibFolder = File("./plugins/ProtocolLib")
-                val protocolLibJar = File("./plugins/ProtocolLib.jar")
-                if (themisJar.exists()) {
-                    protocolLibJar.deleteOnExit()
-                    themisJar.deleteOnExit()
-                    Runtime.getRuntime().addShutdownHook(Thread {
-                        protocolLibFolder.deleteRecursively()
-                        themisFolder.deleteRecursively()
-                    })
-                }
+                println("--> Configuration updates applied")
             }
 
-            println("Checking dependencies...")
+            println("UPDATING > Dependencies")
             download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
             download("https://www.dropbox.com/s/od0syes7xubidh3/RFNETAPI_WorldLoader-1.jar?dl=1", "RFNETAPI_WorldLoader-1")
             download("https://www.dropbox.com/s/v569132ztwnfqbr/CCLib-1.0-SNAPSHOT.jar?dl=1", "CCLib-1.0-SNAPSHOT")
+
+            println("UPDATING > Core")
+            val paperjar = File("./paper_1.17.1.jar")
+            val client = HttpClient() {
+                install(JsonFeature) {
+                    serializer = GsonSerializer()
+                }
+            }
+
+            val versionResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1")
+            val latest = versionResponse.getAsJsonArray("builds").maxOf { it.asInt }
+
+            val buildResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest")
+            val latestChecksum =
+                buildResponse
+                    .getAsJsonObject("downloads")
+                    .getAsJsonObject("application")
+                    .get("sha256")
+                    .asString
+
+            if (sha256(paperjar) != latestChecksum) {
+                println("Checksum doesn't match latest, downloading to verify.")
+                download("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest/downloads/paper-1.17.1-$latest.jar", paperjar, false)
+            }
+
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
         }
     }
 
-    fun download(urlString: String, pluginName: String) {
-        val download = File("./plugins/$pluginName.jar")
-        if (!download.exists()) {
-            println("Downloading $pluginName.jar")
-            val downloadStream = FileOutputStream(download)
-            val url = URL(urlString)
-            val urlConnection = url.openConnection()
-            IOUtils.copy(urlConnection.getInputStream(), downloadStream)
-        }
+    private fun getSpaceConnection(): URLConnection {
+        val basicAuthenticationEncoded =
+            Base64.getEncoder().encodeToString("$spaceUser:$spacePassword".toByteArray(charset("UTF-8")))
+        val url =
+            URL("https://maven.pkg.jetbrains.space/reflectednetwork/p/internalapi/maven/com/reflectednetwork/RfnetAPI/$nextVer/RfnetAPI-$nextVer.jar")
+        val urlConnection = url.openConnection()
+        urlConnection.setRequestProperty("Authorization", "Basic $basicAuthenticationEncoded")
+        return urlConnection
     }
 }

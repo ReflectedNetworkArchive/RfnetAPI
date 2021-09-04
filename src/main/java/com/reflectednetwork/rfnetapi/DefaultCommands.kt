@@ -4,7 +4,6 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.mongodb.client.model.Filters
 import com.reflectednetwork.rfnetapi.async.async
-import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.commands.CommandArguments
 import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import net.kyori.adventure.inventory.Book
@@ -243,7 +242,7 @@ object DefaultCommands {
                 }
             }
         } catch (e: IOException) {
-            ExceptionDispensary.reportAndNotify(e, "checking vote status", player)
+            getReflectedAPI().sendPlayer(player, "survival")
         }
     }
 }
