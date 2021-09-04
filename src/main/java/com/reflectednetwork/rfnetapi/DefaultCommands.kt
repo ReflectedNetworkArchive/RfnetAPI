@@ -14,6 +14,7 @@ import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
+import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
 import java.io.BufferedReader
 import java.io.IOException
@@ -163,8 +164,8 @@ object DefaultCommands {
 
         getReflectedAPI().commandProvider.registerCommands(
             { executor, _ ->
-                if (executor is Player && !playersChecking.contains(executor.uniqueId)) {
-                    playersChecking.add(executor.uniqueId)
+                if (executor is ConsoleCommandSender || (executor is Player && !playersChecking.contains(executor.uniqueId))) {
+                    if (executor is Player) playersChecking.add(executor.uniqueId)
                     executor.sendMessage(Component.text("Collecting information...").color(NamedTextColor.AQUA))
                     async {
                         executor.sendMessage(
@@ -184,7 +185,7 @@ object DefaultCommands {
                                         .color(NamedTextColor.GRAY)
                                 )
                         )
-                    }.then { playersChecking.remove(executor.uniqueId) }
+                    }.then { if (executor is Player) playersChecking.remove(executor.uniqueId) }
                 } else {
                     executor.sendMessage(Component.text("Please wait to use that command!").color(NamedTextColor.RED))
                 }
