@@ -25,40 +25,44 @@ object ExceptionDispensary : Listener {
      * @return The ID of the exception
      */
     fun report(exception: Throwable, whilst: String): String {
-        val id = miniId()
-        val report = StringBuilder()
+        try {
+            val id = miniId()
+            val report = StringBuilder()
 
-        report.append("An exception occurred whilst ${whilst.lowercase()}.\n")
-        report.append("Exception class: ${exception::class}\n")
-        report.append("Exception message: ${exception.message}\n")
-        report.append("Internal code in stack:")
-        for (line in exception.stackTrace) {
-            if (line.toString().contains("reflected")) {
-                report.append("\n at $line")
+            report.append("An exception occurred whilst ${whilst.lowercase()}.\n")
+            report.append("Exception class: ${exception::class}\n")
+            report.append("Exception message: ${exception.message}\n")
+            report.append("Internal code in stack:")
+            for (line in exception.stackTrace) {
+                if (line.toString().contains("reflected")) {
+                    report.append("\n at $line")
+                }
             }
-        }
 
-        val exceptions = ReflectedAPI.get().database.getCollection("bugreps", "exceptions")
-        val document: String
-        val find = exceptions.find(eq("report", report.toString())).first()
-        if (find == null) {
-            document = id
-            exceptions.insertOne(
-                Document()
-                    .append("report", report.toString())
-                    .append("minid", id)
-            )
-        } else {
-            document = find.getString("minid")
-        }
-
-        for (player in Bukkit.getOnlinePlayers()) {
-            if (player.hasPermission("rfnet.developer")) {
-                player.sendMessage(createException(document, report.toString()))
+            val exceptions = ReflectedAPI.get().database.getCollection("bugreps", "exceptions")
+            val document: String
+            val find = exceptions.find(eq("report", report.toString())).first()
+            if (find == null) {
+                document = id
+                exceptions.insertOne(
+                    Document()
+                        .append("report", report.toString())
+                        .append("minid", id)
+                )
+            } else {
+                document = find.getString("minid")
             }
-        }
 
-        return document
+            for (player in Bukkit.getOnlinePlayers()) {
+                if (player.hasPermission("rfnet.developer")) {
+                    player.sendMessage(createException(document, report.toString()))
+                }
+            }
+
+            return document
+        } catch (e: Throwable) {
+            throw e.initCause(exception)
+        }
     }
 
     fun reportAndNotify(exception: Throwable, whilst: String, user: Audience) {
