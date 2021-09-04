@@ -177,13 +177,10 @@ object DefaultCommands {
                                     Component.text("\n - Slime worlds ${if (getReflectedAPI().isMinigameWorld()) "enabled" else "disabled"}")
                                         .color(NamedTextColor.GRAY)
                                 ).append(
-                                    Component.text("\n - Database ${if (getReflectedAPI().database.isConnected()) "connected" else "unavailable"}")
-                                        .color(NamedTextColor.GRAY)
-                                ).append(
                                     Component.text("\n - API ${if (WorldPluginInterface.plugin?.updateCheck() == true) "outdated" else "up to date"}")
                                         .color(NamedTextColor.GRAY)
                                 ).append(
-                                    Component.text("\n - Core version ${Bukkit.getMinecraftVersion()}")
+                                    Component.text("\n - Core version ${Bukkit.getVersion().split("-")[2].split(" ")[0]} based on ${Bukkit.getMinecraftVersion()}")
                                         .color(NamedTextColor.GRAY)
                                 )
                         )
