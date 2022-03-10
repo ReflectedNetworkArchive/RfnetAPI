@@ -218,7 +218,7 @@ class RfnetAPI : JavaPlugin(), Listener {
         val cclibCompatJar = File("./plugins/CCLib-1.0-SNAPSHOT.jar")
         val geyserJar = File("./plugins/Geyser-Spigot.jar")
 
-        if (!worldLoaderJar.exists() || !geyserJar.exists() /*|| !protocolLibJar.exists()*/ || !cclibCompatJar.exists() || (!server.allowFlight || server.onlineMode)) {
+        if (!worldLoaderJar.exists() || !geyserJar.exists() || !cclibCompatJar.exists() || (!server.allowFlight || server.onlineMode)) {
             return true
         }
 
