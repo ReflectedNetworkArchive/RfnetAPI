@@ -134,6 +134,9 @@ class RfnetAPI : JavaPlugin(), Listener {
                 return
             }
 
+
+            download("https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar", "Geyser-Spigot")
+
             if (!disabledForUpdate && File("./ENABLE_UPDATES").exists()) {
 
 //                 Remove this server from the list of ones that are connectable
