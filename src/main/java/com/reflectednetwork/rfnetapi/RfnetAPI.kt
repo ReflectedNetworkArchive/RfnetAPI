@@ -1,11 +1,7 @@
 package com.reflectednetwork.rfnetapi
 //import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.google.common.io.ByteStreams
-import com.google.gson.JsonObject
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
-import io.ktor.client.*
-import io.ktor.client.features.json.*
-import io.ktor.client.request.*
 import kotlinx.coroutines.runBlocking
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
@@ -18,8 +14,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.URL
 import java.net.URLConnection
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.util.*
 import java.util.logging.Level
 
@@ -218,7 +212,7 @@ class RfnetAPI : JavaPlugin(), Listener {
         val cclibCompatJar = File("./plugins/CCLib-1.0-SNAPSHOT.jar")
         val geyserJar = File("./plugins/Geyser-Spigot.jar")
 
-        if (!worldLoaderJar.exists() || !geyserJar.exists() || !cclibCompatJar.exists() || (!server.allowFlight || server.onlineMode)) {
+        if (!worldLoaderJar.exists() || !geyserJar.exists() || !cclibCompatJar.exists()) {
             return true
         }
 
@@ -250,33 +244,33 @@ class RfnetAPI : JavaPlugin(), Listener {
                 pluginUpdateFile.delete()
             }
 
-            println("UPDATING > Configuration")
-            if (!server.allowFlight || server.onlineMode) {
-                val properties = Files.lines(Paths.get("server.properties"))
-                val newProperties = File("server.properties~").outputStream()
-
-                properties.map {
-                    when (it) {
-                        "allow-flight=false" -> "allow-flight=true"
-                        "network-compression-threshold=256" -> "network-compression-threshold=-1"
-                        "view-distance=10" -> "view-distance=5"
-                        "allow-nether=true" -> "allow-nether=${serverConfig.archetype == "survival"}"
-                        "online-mode=true" -> "online-mode=false"
-                        "server-port=25565" -> "server-port=${serverConfig.address.split(":").last()}"
-                        else -> it
-                    }
-                }.forEach { line ->
-                    newProperties.write("$line\n".encodeToByteArray())
-                }
-
-                Runtime.getRuntime().addShutdownHook(Thread {
-                    val propertiesFile = File("server.properties")
-                    propertiesFile.delete()
-                    Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
-                })
-
-                println("--> Configuration updates applied")
-            }
+//            println("UPDATING > Configuration")
+//            if (!server.allowFlight || server.onlineMode) {
+//                val properties = Files.lines(Paths.get("server.properties"))
+//                val newProperties = File("server.properties~").outputStream()
+//
+//                properties.map {
+//                    when (it) {
+//                        "allow-flight=false" -> "allow-flight=true"
+//                        "network-compression-threshold=256" -> "network-compression-threshold=-1"
+//                        "view-distance=10" -> "view-distance=5"
+//                        "allow-nether=true" -> "allow-nether=${serverConfig.archetype == "survival"}"
+//                        "online-mode=true" -> "online-mode=false"
+//                        "server-port=25565" -> "server-port=${serverConfig.address.split(":").last()}"
+//                        else -> it
+//                    }
+//                }.forEach { line ->
+//                    newProperties.write("$line\n".encodeToByteArray())
+//                }
+//
+//                Runtime.getRuntime().addShutdownHook(Thread {
+//                    val propertiesFile = File("server.properties")
+//                    propertiesFile.delete()
+//                    Files.move(Paths.get("server.properties~"), Paths.get("server.properties"))
+//                })
+//
+//                println("--> Configuration updates applied")
+//            }
 
             println("UPDATING > Dependencies")
 //            download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
@@ -284,29 +278,29 @@ class RfnetAPI : JavaPlugin(), Listener {
             download("https://www.dropbox.com/s/v569132ztwnfqbr/CCLib-1.0-SNAPSHOT.jar?dl=1", "CCLib-1.0-SNAPSHOT")
             download("https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar", "Geyser-Spigot")
 
-            println("UPDATING > Core")
-            val paperjar = File("./paper_1.17.1.jar")
-            val client = HttpClient() {
-                install(JsonFeature) {
-                    serializer = GsonSerializer()
-                }
-            }
-
-            val versionResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1")
-            val latest = versionResponse.getAsJsonArray("builds").maxOf { it.asInt }
-
-            val buildResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest")
-            val latestChecksum =
-                buildResponse
-                    .getAsJsonObject("downloads")
-                    .getAsJsonObject("application")
-                    .get("sha256")
-                    .asString
-
-            if (sha256(paperjar) != latestChecksum) {
-                println("Checksum doesn't match latest, downloading to verify.")
-                download("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest/downloads/paper-1.17.1-$latest.jar", paperjar, false)
-            }
+//            println("UPDATING > Core")
+//            val paperjar = File("./paper_1.17.1.jar")
+//            val client = HttpClient() {
+//                install(JsonFeature) {
+//                    serializer = GsonSerializer()
+//                }
+//            }
+//
+//            val versionResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1")
+//            val latest = versionResponse.getAsJsonArray("builds").maxOf { it.asInt }
+//
+//            val buildResponse: JsonObject = client.request("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest")
+//            val latestChecksum =
+//                buildResponse
+//                    .getAsJsonObject("downloads")
+//                    .getAsJsonObject("application")
+//                    .get("sha256")
+//                    .asString
+//
+//            if (sha256(paperjar) != latestChecksum) {
+//                println("Checksum doesn't match latest, downloading to verify.")
+//                download("https://papermc.io/api/v2/projects/paper/versions/1.17.1/builds/$latest/downloads/paper-1.17.1-$latest.jar", paperjar, false)
+//            }
 
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "updating")
