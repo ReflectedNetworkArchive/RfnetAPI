@@ -1,20 +1,12 @@
 package com.reflectednetwork.rfnetapi
+//import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import com.google.common.io.ByteStreams
 import com.google.gson.JsonObject
-import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
-import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
-import com.reflectednetwork.rfnetapi.modtools.ModCommands
-import com.reflectednetwork.rfnetapi.modtools.ModEvents
-import com.reflectednetwork.rfnetapi.permissions.PermissionAPI
-import com.reflectednetwork.rfnetapi.permissions.PermissionCommands
-import com.reflectednetwork.rfnetapi.purchases.PurchaseEvents
-import com.reflectednetwork.rfnetapi.purchases.PurchaseGUI
 import io.ktor.client.*
 import io.ktor.client.features.json.*
 import io.ktor.client.request.*
 import kotlinx.coroutines.runBlocking
-import org.apache.commons.io.IOUtils
 import org.bstats.bukkit.Metrics
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -47,9 +39,9 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     var api: ReflectedAPI? = null
     val serverConfig = ServerConfig()
-    val database = Database(serverConfig)
+//    val database = Database(serverConfig)
     var minigameWorld = false
-    private lateinit var permissionAPI: PermissionAPI
+//    private lateinit var permissionAPI: PermissionAPI
     var ghostMode = false
 
     override fun onEnable() {
@@ -57,12 +49,12 @@ class RfnetAPI : JavaPlugin(), Listener {
             // Init the API and let any waiting plugins know that it's ready now.
             api = ReflectedAPI(this)
 
-            if (updateCheck()) {
-                async {
+            if (File("./ENABLE_UPDATES").exists()) {
+                if (updateCheck()) {
                     logger.log(Level.SEVERE, "Plugin or dependencies out of date! Will restart server shortly.")
+                    Bukkit.getScheduler().runTaskLater(this, Runnable { restart() }, 20)
+                    return
                 }
-                Bukkit.getScheduler().runTaskLater(this, Runnable { restart() }, 20)
-                return
             }
 
             if (Bukkit.getWorldContainer().list()?.contains("RFNET_GHOST_MODE") == true) {
@@ -76,10 +68,10 @@ class RfnetAPI : JavaPlugin(), Listener {
 
 
 
-            permissionAPI = PermissionAPI(this)
-            PermissionCommands.setupCommands()
-
-            ModCommands.initCommands()
+//            permissionAPI = PermissionAPI(this)
+//            PermissionCommands.setupCommands()
+//
+//            ModCommands.initCommands()
 
             // If something is wrong with the config, shutdown the server, since it won't be connectable.
             if (!serverConfig.isValid()) {
@@ -92,34 +84,34 @@ class RfnetAPI : JavaPlugin(), Listener {
 
             // Register other API's events
             server.pluginManager.registerEvents(ReflectedAPI.get().commandProvider, this)
-            server.pluginManager.registerEvents(ReflectedAPI.get().purchaseAPI, this)
+//            server.pluginManager.registerEvents(ReflectedAPI.get().purchaseAPI, this)
 
-            server.pluginManager.registerEvents(PurchaseGUI, this)
-            server.pluginManager.registerEvents(PurchaseEvents, this)
+//            server.pluginManager.registerEvents(PurchaseGUI, this)
+//            server.pluginManager.registerEvents(PurchaseEvents, this)
             server.pluginManager.registerEvents(ExceptionDispensary, this)
-            server.pluginManager.registerEvents(MedallionAPI, this)
+//            server.pluginManager.registerEvents(MedallionAPI, this)
             server.pluginManager.registerEvents(JoinEventWorkaround, this)
             server.pluginManager.registerEvents(PlayerCountEvents, this)
-            server.pluginManager.registerEvents(ModEvents, this)
-            server.pluginManager.registerEvents(permissionAPI, this)
+//            server.pluginManager.registerEvents(ModEvents, this)
+//            server.pluginManager.registerEvents(permissionAPI, this)
 
             // Check online receipts on occasion.
-            server.scheduler.runTaskTimerAsynchronously(this, Runnable {
-                try {
-                    for (player in server.onlinePlayers) {
-                        PurchaseEvents.checkReceipts(player)
-                    }
-                } catch (e: Exception) {
-                    ExceptionDispensary.report(e, "checking receipts")
-                }
-            }, 400, 400)
+//            server.scheduler.runTaskTimerAsynchronously(this, Runnable {
+//                try {
+//                    for (player in server.onlinePlayers) {
+//                        PurchaseEvents.checkReceipts(player)
+//                    }
+//                } catch (e: Exception) {
+//                    ExceptionDispensary.report(e, "checking receipts")
+//                }
+//            }, 400, 400)
 
             // Also, check for updates if no one is online
             server.scheduler.runTaskTimerAsynchronously(this, Runnable {
                 try {
-                    if (Bukkit.getOnlinePlayers().isEmpty() && updateCheck()) {
-                        restart()
-                    }
+//                    if (Bukkit.getOnlinePlayers().isEmpty() && updateCheck()) {
+//                        restart()
+//                    }
                 } catch (e: Exception) {
                     ExceptionDispensary.report(e, "checking for updates")
                 }
@@ -129,10 +121,10 @@ class RfnetAPI : JavaPlugin(), Listener {
             DefaultCommands.initialize()
 
             // Some stuff should be run AFTER the server has fully loaded.
-            server.scheduler.runTaskLater(this, Runnable {
-                // Add this server's information to Redis for ServerDiscovery.
-                database.setAvailable(true)
-            }, 1) // 1 tick, so waits until the server is fully started (started ticking)
+//            server.scheduler.runTaskLater(this, Runnable {
+//                // Add this server's information to Redis for ServerDiscovery.
+//                database.setAvailable(true)
+//            }, 1) // 1 tick, so waits until the server is fully started (started ticking)
 
             // Stats
             Metrics(this, 12072)
@@ -148,15 +140,15 @@ class RfnetAPI : JavaPlugin(), Listener {
                 return
             }
 
-            if (!disabledForUpdate) {
+            if (!disabledForUpdate && File("./ENABLE_UPDATES").exists()) {
 
-                // Remove this server from the list of ones that are connectable
-                database.setAvailable(false)
-                database.updatePlayerCount(0)
+//                 Remove this server from the list of ones that are connectable
+//                database.setAvailable(false)
+//                database.updatePlayerCount(0)
                 // Close the connections to the database
                 // so we don't overload them.
-                database.close()
-                // and then update the server
+//                database.close()
+//                 and then update the server
                 runBlocking { update() }
             }
         } catch (e: Exception) {
@@ -181,9 +173,9 @@ class RfnetAPI : JavaPlugin(), Listener {
         try {
             disabledForUpdate = true
 
-            // Remove this server from the list of ones that are connectable
-            database.setAvailable(false)
-            database.updatePlayerCount(0)
+//            // Remove this server from the list of ones that are connectable
+//            database.setAvailable(false)
+//            database.updatePlayerCount(0)
 
             // Send everybody to another server
             for (player in Bukkit.getOnlinePlayers()) {
@@ -192,7 +184,7 @@ class RfnetAPI : JavaPlugin(), Listener {
 
             // Close the connections to the database
             // so we don't overload them.
-            database.close()
+//            database.close()
 
             // And then update the server
             runBlocking { update() }
@@ -222,10 +214,11 @@ class RfnetAPI : JavaPlugin(), Listener {
 
     fun updateCheck(): Boolean {
         val worldLoaderJar = File("./plugins/RFNETAPI_WorldLoader-1.jar")
-        val protocolLibJar = File("./plugins/ProtocolLib-4.7.0.jar")
+//        val protocolLibJar = File("./plugins/ProtocolLib-4.7.0.jar")
         val cclibCompatJar = File("./plugins/CCLib-1.0-SNAPSHOT.jar")
+        val geyserJar = File("./plugins/Geyser-Spigot.jar")
 
-        if (!worldLoaderJar.exists() || !protocolLibJar.exists() || !cclibCompatJar.exists() || (!server.allowFlight || server.onlineMode)) {
+        if (!worldLoaderJar.exists() || !geyserJar.exists() /*|| !protocolLibJar.exists()*/ || !cclibCompatJar.exists() || (!server.allowFlight || server.onlineMode)) {
             return true
         }
 
@@ -247,7 +240,7 @@ class RfnetAPI : JavaPlugin(), Listener {
             val pluginUpdateFile = File("./plugins/RfnetAPI-$nextVer.jar")
             try {
                 val downloadStream = FileOutputStream(pluginUpdateFile)
-                IOUtils.copy(getSpaceConnection().getInputStream(), downloadStream)
+                org.apache.commons.io.IOUtils.copy(getSpaceConnection().getInputStream(), downloadStream)
                 File("./plugins/RfnetAPI-$ver.jar").deleteOnExit()
                 println("--> Plugin updated")
             }  catch (e: FileNotFoundException) {
@@ -286,9 +279,10 @@ class RfnetAPI : JavaPlugin(), Listener {
             }
 
             println("UPDATING > Dependencies")
-            download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
+//            download("https://github.com/dmulloy2/ProtocolLib/releases/download/4.7.0/ProtocolLib.jar", "ProtocolLib-4.7.0")
             download("https://www.dropbox.com/s/od0syes7xubidh3/RFNETAPI_WorldLoader-1.jar?dl=1", "RFNETAPI_WorldLoader-1")
             download("https://www.dropbox.com/s/v569132ztwnfqbr/CCLib-1.0-SNAPSHOT.jar?dl=1", "CCLib-1.0-SNAPSHOT")
+            download("https://ci.opencollab.dev//job/GeyserMC/job/Geyser/job/master/lastSuccessfulBuild/artifact/bootstrap/spigot/target/Geyser-Spigot.jar", "Geyser-Spigot")
 
             println("UPDATING > Core")
             val paperjar = File("./paper_1.17.1.jar")

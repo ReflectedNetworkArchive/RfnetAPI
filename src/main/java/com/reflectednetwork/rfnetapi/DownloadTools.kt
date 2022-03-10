@@ -1,20 +1,23 @@
 package com.reflectednetwork.rfnetapi
 
-import jakarta.xml.bind.DatatypeConverter
+//import jakarta.xml.bind.DatatypeConverter
 import org.apache.commons.io.IOUtils
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
-import java.security.MessageDigest
 
 fun sha256(input: File?) = sha256(input?.readBytes())
 fun sha256(input: ByteArray?) = hashString("SHA256", input)
 
 private fun hashString(type: String, input: ByteArray?): String {
-    val bytes = MessageDigest
-        .getInstance(type)
-        .digest(input ?: ByteArray(0))
-    return DatatypeConverter.printHexBinary(bytes).lowercase()
+//    val bytes = MessageDigest
+//        .getInstance(type)
+//        .digest(input ?: ByteArray(0))
+//    return DatatypeConverter.printHexBinary(bytes).lowercase()
+    return Math.random()
+        .toString() // Return a random hash, redownload everything. Since this is just the packaged version,
+    // You'll only ever need to update once, and it's not worth the extra library for packaging.
+    // However, this needs to be accurate for the server version for efficiency.
 }
 
 fun download(urlString: String, file: File, ignoreHash: Boolean) {

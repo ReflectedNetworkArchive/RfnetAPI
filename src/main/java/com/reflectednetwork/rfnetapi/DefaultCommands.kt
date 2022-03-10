@@ -1,25 +1,15 @@
 package com.reflectednetwork.rfnetapi
 
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.mongodb.client.model.Filters
 import com.reflectednetwork.rfnetapi.async.async
 import com.reflectednetwork.rfnetapi.commands.CommandArguments
-import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
-import net.kyori.adventure.inventory.Book
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
-import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.command.ConsoleCommandSender
 import org.bukkit.entity.Player
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.net.URL
 import java.util.*
 
 object DefaultCommands {
@@ -49,10 +39,10 @@ object DefaultCommands {
                             executor.sendMessage(Component.text("That server is protected.").color(NamedTextColor.RED))
                         }
                     } else if (arguments.getString(0) == "survival") {
-                        checkVoteAndSendToSurvival(executor)
+//                        checkVoteAndSendToSurvival(executor)
                     } else {
                         if (arguments.getString(0) == "spleefrun") {
-                            MedallionAPI.giveMedallion(executor, "join_spleefrun", "Play SpleefRun")
+//                            MedallionAPI.giveMedallion(executor, "join_spleefrun", "Play SpleefRun")
                         }
                         getReflectedAPI().sendPlayer(executor, arguments.getString(0))
                     }
@@ -148,17 +138,17 @@ object DefaultCommands {
 
         getReflectedAPI().commandProvider.registerCommand(
             { executor, arguments ->
-                val exceptions = getReflectedAPI().database.getCollection("bugreps", "exceptions")
-                if (exceptions.deleteMany(Filters.eq("minid", arguments.getString(0))).deletedCount > 0) {
-                    executor.sendMessage(
-                        Component.text("☞ ")
-                            .color(NamedTextColor.GRAY)
-                            .append(
-                                Component.text("Item erased!")
-                                    .color(NamedTextColor.GREEN)
-                            )
-                    )
-                }
+//                val exceptions = getReflectedAPI().database.getCollection("bugreps", "exceptions")
+//                if (exceptions.deleteMany(Filters.eq("minid", arguments.getString(0))).deletedCount > 0) {
+//                    executor.sendMessage(
+//                        Component.text("☞ ")
+//                            .color(NamedTextColor.GRAY)
+//                            .append(
+//                                Component.text("Item erased!")
+//                                    .color(NamedTextColor.GREEN)
+//                            )
+//                    )
+//                }
             }, "rfnet.developer", 1, "excclear"
         )
 
@@ -177,10 +167,11 @@ object DefaultCommands {
                                 ).append(
                                     Component.text("\n - Slime worlds ${if (getReflectedAPI().isMinigameWorld()) "enabled" else "disabled"}")
                                         .color(NamedTextColor.GRAY)
-                                ).append(
+                                /*)
+                                .append(
                                     Component.text("\n - API ${if (WorldPluginInterface.plugin?.updateCheck() == true) "outdated" else "up to date"}")
                                         .color(NamedTextColor.GRAY)
-                                ).append(
+                                */).append(
                                     Component.text("\n - Core version ${Bukkit.getVersion().split("-")[2].split(" ")[0]} based on ${Bukkit.getMinecraftVersion()}")
                                         .color(NamedTextColor.GRAY)
                                 )
@@ -197,50 +188,50 @@ object DefaultCommands {
         )
     }
 
-    private fun checkVoteAndSendToSurvival(player: Player) {
-        try {
-            if (player.hasPermission("rfnet.rank.plus") || player.clientBrandName == "Reflected-Official-Client") {
-                MedallionAPI.giveMedallion(player, "join_survivals3", "Join Survival S3")
-                getReflectedAPI().sendPlayer(player, "survival")
-                return
-            }
-
-            async {
-                val url = URL("https://reflected.network/voted/" + player.name)
-                val connection = url.openConnection()
-                val inputStream = connection.getInputStream()
-                val inputStreamReader = InputStreamReader(inputStream)
-                val bufferedReader = BufferedReader(inputStreamReader)
-                val builder = StringBuilder()
-                bufferedReader.lines().forEach { str: String? -> builder.append(str) }
-                val result = Gson().fromJson(builder.toString(), JsonObject::class.java)
-                result["voted"].asBoolean
-            }.then {
-                if (it) {
-                    getReflectedAPI().sendPlayer(player, "survival")
-                    MedallionAPI.giveMedallion(player, "join_survivals3", "Join Survival S3")
-                } else {
-                    player.sendMessage(Component.text("You need to vote before joining survival."))
-                    player.openInventory.close()
-                    player.openBook(
-                        Book.book(
-                            Component.text(""),
-                            Component.text(""),
-                            Component.text("\n\n\nUse the link below vote.\n   ")
-                                .color(NamedTextColor.BLACK)
-                                .append(
-                                    Component.text("Click to open!")
-                                        .clickEvent(ClickEvent.openUrl("https://reflected.network/vote"))
-                                        .color(NamedTextColor.GREEN)
-                                        .decoration(TextDecoration.UNDERLINED, TextDecoration.State.TRUE)
-                                        .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)
-                                )
-                        )
-                    )
-                }
-            }
-        } catch (e: IOException) {
-            getReflectedAPI().sendPlayer(player, "survival")
-        }
-    }
+//    private fun checkVoteAndSendToSurvival(player: Player) {
+//        try {
+//            if (player.hasPermission("rfnet.rank.plus") || player.clientBrandName == "Reflected-Official-Client") {
+//                MedallionAPI.giveMedallion(player, "join_survivals3", "Join Survival S3")
+//                getReflectedAPI().sendPlayer(player, "survival")
+//                return
+//            }
+//
+//            async {
+//                val url = URL("https://reflected.network/voted/" + player.name)
+//                val connection = url.openConnection()
+//                val inputStream = connection.getInputStream()
+//                val inputStreamReader = InputStreamReader(inputStream)
+//                val bufferedReader = BufferedReader(inputStreamReader)
+//                val builder = StringBuilder()
+//                bufferedReader.lines().forEach { str: String? -> builder.append(str) }
+//                val result = Gson().fromJson(builder.toString(), JsonObject::class.java)
+//                result["voted"].asBoolean
+//            }.then {
+//                if (it) {
+//                    getReflectedAPI().sendPlayer(player, "survival")
+////                    MedallionAPI.giveMedallion(player, "join_survivals3", "Join Survival S3")
+//                } else {
+//                    player.sendMessage(Component.text("You need to vote before joining survival."))
+//                    player.openInventory.close()
+//                    player.openBook(
+//                        Book.book(
+//                            Component.text(""),
+//                            Component.text(""),
+//                            Component.text("\n\n\nUse the link below vote.\n   ")
+//                                .color(NamedTextColor.BLACK)
+//                                .append(
+//                                    Component.text("Click to open!")
+//                                        .clickEvent(ClickEvent.openUrl("https://reflected.network/vote"))
+//                                        .color(NamedTextColor.GREEN)
+//                                        .decoration(TextDecoration.UNDERLINED, TextDecoration.State.TRUE)
+//                                        .decoration(TextDecoration.BOLD, TextDecoration.State.TRUE)
+//                                )
+//                        )
+//                    )
+//                }
+//            }
+//        } catch (e: IOException) {
+//            getReflectedAPI().sendPlayer(player, "survival")
+//        }
+//    }
 }

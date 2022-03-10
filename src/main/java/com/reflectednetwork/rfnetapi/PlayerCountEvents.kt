@@ -13,7 +13,7 @@ object PlayerCountEvents : Listener {
     private fun playerJoin(event: PlayerJoinEvent) {
         async {
             try {
-                getReflectedAPI().database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
+//                getReflectedAPI().database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
             } catch (e: Exception) {
                 ExceptionDispensary.report(e, "player join")
             }
@@ -24,7 +24,7 @@ object PlayerCountEvents : Listener {
     private fun playerQuit(event: PlayerQuitEvent) {
         async {
             try {
-                getReflectedAPI().database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
+//                getReflectedAPI().database.updatePlayerCount(Bukkit.getOnlinePlayers().size)
             } catch (e: Exception) {
                 ExceptionDispensary.report(e, "player quit")
             }

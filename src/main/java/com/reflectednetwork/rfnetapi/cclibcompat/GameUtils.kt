@@ -6,7 +6,6 @@ import com.reflectednetwork.rfnetapi.ReflectedAPI
 import com.reflectednetwork.rfnetapi.WorldPluginInterface.plugin
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.getReflectedAPI
-import com.reflectednetwork.rfnetapi.medallions.MedallionAPI
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
@@ -191,8 +190,9 @@ class GameUtils : IGameUtils, Listener {
 
     @EventHandler
     fun playerInteract(event: PlayerInteractEvent) {
-        if (!started) {
-            kickIfLobbyTP(event.item!!, event.player)
+        val item = event.item
+        if (!started && item != null) {
+            kickIfLobbyTP(item, event.player)
             event.isCancelled = true
         }
     }
@@ -217,7 +217,7 @@ class GameUtils : IGameUtils, Listener {
     override fun blockInteract(event: PlayerInteractEvent) {
         try {
             if (event.clickedBlock == null) return
-            if (interactBlockList.contains(event.clickedBlock!!.type)) {
+            if (interactBlockList.contains(event.clickedBlock?.type)) {
                 event.isCancelled = true
             }
         } catch (e: Exception) {
@@ -252,9 +252,7 @@ class GameUtils : IGameUtils, Listener {
 
     override fun kickIfLobbyTP(item: ItemStack, player: Player) {
         try {
-            if (Objects.requireNonNull(item.itemMeta.displayName())!!
-                    .contains(returnToLobbyName)
-            ) {
+            if (item.itemMeta?.displayName()?.contains(returnToLobbyName) == true) {
                 getReflectedAPI().sendPlayer(player, "lobby")
             }
         } catch (e: Exception) {
@@ -267,7 +265,7 @@ class GameUtils : IGameUtils, Listener {
         if (awardedwinner) return
         awardedwinner = true
 
-        MedallionAPI.increaseStat(winner, "wins-${plugin?.serverConfig?.archetype}", "${plugin?.serverConfig?.archetype?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} Win")
+//        MedallionAPI.increaseStat(winner, "wins-${plugin?.serverConfig?.archetype}", "${plugin?.serverConfig?.archetype?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} Win")
 
         try {
             winner.isFlying = true

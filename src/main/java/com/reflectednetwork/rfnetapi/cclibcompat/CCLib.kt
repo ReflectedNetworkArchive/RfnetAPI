@@ -36,7 +36,7 @@ object CCLib : ICCLib {
         teleport: Runnable
     ) {
         if (!this::scoreboardManager.isInitialized) {
-            println("WARNNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
+            println("WARNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
             scoreboardManager = ScoreboardManager()
             plugin?.let { Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, it) }
         }
@@ -46,7 +46,7 @@ object CCLib : ICCLib {
 
     override fun getGameUtils(): ICCLib.IGameUtils {
         if (!this::scoreboardManager.isInitialized) {
-            println("WARNNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
+            println("WARNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
             scoreboardManager = ScoreboardManager()
             plugin?.let { Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, it) }
         }
@@ -81,7 +81,7 @@ object CCLib : ICCLib {
 
     override fun getScoreboardManager(): ICCLib.IScoreboardManager {
         if (!this::scoreboardManager.isInitialized) {
-            println("WARNNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
+            println("WARNING: CCLib ScoreBoardManager is enabled. Scoreboards will break unless accessed via legacy functions!")
             scoreboardManager = ScoreboardManager()
             plugin?.let { Bukkit.getServer().pluginManager.registerEvents(scoreboardManager, it) }
         }

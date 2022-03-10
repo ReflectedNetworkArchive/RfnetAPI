@@ -2,7 +2,6 @@ package com.reflectednetwork.rfnetapi
 
 import com.reflectednetwork.rfnetapi.bugs.ExceptionDispensary
 import com.reflectednetwork.rfnetapi.commands.CommandRegistry
-import com.reflectednetwork.rfnetapi.purchases.PurchaseAPI
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
@@ -11,12 +10,12 @@ import org.bukkit.entity.Player
  * The main class for accessing the Reflected API. Please refrain from directly accessing anything else.
  */
 class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
-    val purchaseAPI = PurchaseAPI()
+//    val purchaseAPI = PurchaseAPI()
     val commandProvider = CommandRegistry()
 
     fun setAvailable(available: Boolean) {
         try {
-            plugin.database.setAvailable(available)
+//            plugin.database.setAvailable(available)
         } catch (e: Exception) {
             ExceptionDispensary.report(e, "setting server availability")
         }
@@ -34,8 +33,8 @@ class ReflectedAPI internal constructor(private val plugin: RfnetAPI) {
         }
     }
 
-    val database: Database
-        get() = plugin.database
+//    val database: Database
+//        get() = plugin.database
 
     fun sendPlayer(player: Player, archetype: String) {
         try {

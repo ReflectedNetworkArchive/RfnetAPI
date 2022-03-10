@@ -15,12 +15,12 @@ object GhostModeManager : Listener {
     fun enable(plugin: RfnetAPI) {
         this.plugin = plugin
         Bukkit.getPluginManager().registerEvents(this, plugin)
-        plugin.database.setAvailable(true)
+//        plugin.database.setAvailable(true)
     }
 
     fun disable() {
-        plugin.database.setAvailable(false)
-        plugin.database.close()
+//        plugin.database.setAvailable(false)
+//        plugin.database.close()
     }
 
     @EventHandler

@@ -73,8 +73,8 @@ class ServerConfig {
             ExceptionDispensary.report(e, "loading configuration")
         }
         if (archetype == "REPLACE-THIS") {
-            missingMsg = "You need to fill out bootconfig.yaml in your server's root directory."
-            valid = false
+            //missingMsg = "You need to fill out bootconfig.yaml in your server's root directory."
+            valid = true
         }
         finishedLoad = true
     }
